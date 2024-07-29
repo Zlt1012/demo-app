@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <title>FillLayer图层</title>
+    <style type="text/css">
+      body,
+      html {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+      }
+      #allmap {
+        height: 100%;
+        width: 100%;
+      }
+      ul li {
+        list-style: none;
+      }
+      .btn-wrap {
+        z-index: 999;
+        position: fixed;
+        bottom: 3.5rem;
+        margin-left: 3rem;
+        padding: 1rem 1rem;
+        border-radius: 0.25rem;
+        background-color: #fff;
+        box-shadow: 0 2px 6px 0 rgba(27, 142, 236, 0.5);
+      }
+      .btn {
+        width: 75px;
+        height: 30px;
+        float: left;
+        background-color: #fff;
+        color: rgba(27, 142, 236, 1);
+        font-size: 14px;
+        border: 1px solid rgba(27, 142, 236, 1);
+        border-radius: 5px;
+        margin: 0 5px;
+        text-align: center;
+        line-height: 30px;
+      }
+      .btn:hover {
+        background-color: rgba(27, 142, 236, 0.8);
+        color: #fff;
+      }
+    </style>
+    <script
+      type="text/javascript"
+      src="https://api.map.baidu.com/api?type=webgl&v=1.0&ak=zrCWfvpfrUjrS57pGKBTB5oWoWhTVhxl"
+    ></script>
+    <script src="https://mapv.baidu.com/gl/examples/static/common.js"></script>
+  </head>
+  <body>
+    <div id="allmap"></div>
+  </body>
+</html>
+<script type="text/javascript">
+  // 定义一个函数来加载 JSON 文件
+  async function loadJsonData() {
+    const response = await fetch('world.zh.json');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+     // 将响应体解析为 JSON
+    return await response.json();
+  }
+
+  // 使用上面定义的函数加载 JSON 并处理数据
+  (async () => {
+
+    const data = await loadJsonData();
+    console.log(data); // 输出整个 JSON
+    var markedArea = ['泰国', '菲律宾', '老挝', '缅甸', '柬埔寨',];
+    data.features = data.features.filter(feature => markedArea.includes(feature.properties.name) );
+    var map = new BMapGL.Map("allmap");
+    var point = new BMapGL.Point(116.414, 39.915);
+    map.centerAndZoom(point, 10);
+    map.enableScrollWheelZoom(true);
+    map.setMapStyleV2({ styleJson: whiteStyle });
+    var fillLayer = null;
+    if (!fillLayer) {
+      fillLayer = new BMapGL.FillLayer({
+        crs: "GCJ02",
+        enablePicked: true,
+        autoSelect: true,
+        pickWidth: 30,
+        pickHeight: 30,
+        selectedColor: "green", // 悬浮选中项颜色
+        border: true,
+        style: {
+          fillColor: [
+            "case",
+            ["boolean", ["feature-state", "picked"], false], "red",
+            [
+              "match",
+              ["get", "name"],
+              "泰国",
+              "#ce4848",
+              "菲律宾",
+              "blue",
+              "老挝",
+              "blue",
+              "缅甸",
+              "#6704ff",
+              "柬埔寨",
+              "#6704ff",
+              "#6704ff" // 明确指定默认值为空
+            ],
+          ],
+          fillOpacity: 0.3,
+          strokeWeight: 1,
+          strokeColor: "white",
+        },
+      });
+
+      fillLayer.addEventListener("click", function (e) {
+        if (e.value.dataIndex !== -1 && e.value.dataItem) {
+          console.log("click", e.value.dataItem);
+          // this.updateState(e.value.dataIndex, { picked: true }, true);
+        }
+      });
+    }
+
+    console.log('xxxx---',data)
+
+    map.addNormalLayer(fillLayer);
+    fillLayer.setData(data);
+
+    // var dist = new BMapGL.DistrictLayer({
+    //       name: '(北京,天津)',
+    //       fillColor: 'red',
+    //       fillOpacity: 1,
+    //       viewport: true
+    //   });
+    //   map.addDistrictLayer(dist);
+    //
+    //   console.log(dist)
+
+
+  })();
+
+
+
+
+</script>
