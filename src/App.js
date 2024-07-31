@@ -22,6 +22,33 @@ function App() {
       currency: "美元",
       price: "10000",
     },
+    {
+      name: "郑州公司",
+      date: "2024-04-01",
+      time: "2024-03-01",
+      currency: "美元",
+      price: "10000",
+    },
+    {
+      name: "青岛公司",
+      date: "2024-04-01",
+      time: "2024-03-01",
+      currency: "美元",
+      price: "10000",
+    }, {
+      name: "杭州公司",
+      date: "2024-04-01",
+      time: "2024-03-01",
+      currency: "美元",
+      price: "10000",
+    },
+    {
+      name: "北京公司",
+      date: "2024-04-01",
+      time: "2024-03-01",
+      currency: "美元",
+      price: "10000",
+    },
   ]);
   const [treeData, setTreeData] = useState([
     {
@@ -198,7 +225,8 @@ if(!scatterPlot) {
     //   },
     // },
       yAxis: {
-        label: false,
+      max: 13,
+      label: false,
       },
     xAxis: {
       min: 2019,
@@ -258,12 +286,12 @@ if(!scatterPlot) {
               <p className="title"><img src={lemonIcon} alt="" />公司合作情况</p>
               <div
                 id="chartContainer"
-                style={{ width: "410px", height: "400px" }}
+                style={{ width: "410px", height: "320px" }}
               />
             </div>
             <div className="bottom">
               <p className="title"><img src={lemonIcon} alt="" />列表数据</p>
-              <Table columns={columns} dataSource={dataSource} size="small" />
+              <Table columns={columns} dataSource={dataSource} size="small" pagination={false}/>
             </div>
           </div>
         </div>
