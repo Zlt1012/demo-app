@@ -35,7 +35,6 @@ const Page = () => {
     renderChart();
     renderMap();
   };
-
   const renderMap = async () => {
     let markedArea = ["泰国", "菲律宾", "老挝", "缅甸", "柬埔寨"];
     featureData.features = featureData.features.filter((feature) =>
@@ -81,8 +80,31 @@ const Page = () => {
           strokeColor: "white",
         },
       });
+      const messageDom = document.getElementById("message");
 
       fillLayerRef.current.addEventListener("mousemove", function (e) {
+        const name = e?.value?.dataItem?.properties?.name
+        if(name) {
+          messageDom.style.display = "block";
+          messageDom.style.top = e.pixel.y + "px";
+          messageDom.style.left = e.pixel.x + "px";
+          // this.updateState(e.value.dataIndex, { picked: true }, true);
+        } else {
+          if(messageDom?.style?.display ) {messageDom.style.display = "none";}
+        }
+        // if (e.value.dataIndex !== -1 && e.value.dataItem) {
+        //   console.log("click", e.value.dataItem);
+        //   console.log(e.pixel);
+        //   const messageDom = document.getElementById("message");
+        //   messageDom.style.display = "block";
+        //   messageDom.style.top = e.pixel.y + "px";
+        //   messageDom.style.left = e.pixel.x + "px";
+        //   // this.updateState(e.value.dataIndex, { picked: true }, true);
+        // }
+      });
+      fillLayerRef.current.addEventListener("mouseout", function (e) {
+        console.log(222);
+        return;
         if (e.value.dataIndex !== -1 && e.value.dataItem) {
           console.log("click", e.value.dataItem);
           console.log(e.pixel);
