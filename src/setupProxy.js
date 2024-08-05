@@ -17,4 +17,14 @@ module.exports = function(app) {
       changeOrigin: true,
     })
   );
+
+    // 你可以添加更多代理配置
+    app.use(
+        '/other-api',
+        createProxyMiddleware({
+            target: 'http://localhost:4000',
+            changeOrigin: true,
+        })
+    );
+
 };
