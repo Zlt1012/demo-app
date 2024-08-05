@@ -20,9 +20,9 @@ module.exports = function(app) {
 
     // 你可以添加更多代理配置
     app.use(
-        '/other-api',
+        '/open-apis',
         createProxyMiddleware({
-            target: 'http://localhost:4000',
+            target: 'https://open.feishu.cn',
             changeOrigin: true,
         })
     );

@@ -13,6 +13,76 @@ import {
 } from "@ant-design/icons";
 const { Search } = Input;
 
+const fetchFeishuAppAccessToken = async () => {
+
+  const responseAccessToken = await fetch("/open-apis/auth/v3/app_access_token/internal",
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          app_secret: 'D8ghPMwm5gnsxJVVqXo6hgEdpXIEcpls',
+          app_id: 'cli_a6258e69ff70900c',
+        }),
+
+      });
+  if (!responseAccessToken.ok) {
+    throw new Error(`HTTP error! status: ${responseAccessToken.status}`);
+  }
+
+  // 将响应体解析为 JSON
+  const accessToken = await responseAccessToken.json();
+  console.log(accessToken)
+
+  const appId = 'SRNFbD1xSasuOEsxeJFcR0dWn1d';
+  const responseTable = await fetch(`/open-apis/bitable/v1/apps/${appId}/tables`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + accessToken.app_access_token,
+        },
+
+      });
+
+  // 将响应体解析为 JSON
+  const tablesFeishu = await responseTable.json();
+  console.log(tablesFeishu)
+  const tableInfo = tablesFeishu.data.items.find((table) => table.name === "合同信息");
+  const tableId = tableInfo.table_id;
+
+  const recordsUrl = `/open-apis/bitable/v1/apps/${appId}/tables/${tableId}/records`;
+  const responseRecords = await fetch(recordsUrl,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + accessToken.app_access_token,
+        },
+
+      });
+
+  // 将响应体解析为 JSON
+  const recordsFeishu = await responseRecords.json();
+  console.log(recordsFeishu)
+
+  const authorityAreasSet = new Set();
+  recordsFeishu.data.items.forEach((record) => {
+    const authorityArea = record.fields["授权区域"];
+    if(authorityArea){
+      authorityArea.forEach((area) => {
+        authorityAreasSet.add(area);
+      });
+    }
+
+  });
+  console.log('authorityAreasSet-----',authorityAreasSet)
+
+
+  return [...authorityAreasSet];
+};
+
 const Page = () => {
   const scatterPlotRef = useRef(null);
   const fillLayerRef = useRef(null);
@@ -37,7 +107,8 @@ const Page = () => {
     renderMap();
   };
   const renderMap = async () => {
-    let markedArea = ["泰国", "菲律宾", "老挝", "缅甸", "柬埔寨"];
+    // let markedArea = ["泰国", "菲律宾", "老挝", "缅甸", "柬埔寨"];
+    let markedArea =  await fetchFeishuAppAccessToken();
     featureData.features = featureData.features.filter((feature) =>
       markedArea.includes(feature.properties.name)
     );
