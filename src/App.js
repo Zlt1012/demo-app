@@ -1,7 +1,11 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Map from "./pages/Map";
+import {useEffect} from "react";
 
 function App() {
+    useEffect(() => {
+        console.log('App.....')
+    }, []);
   return (
     <Router>
       <Routes>

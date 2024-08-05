@@ -13,75 +13,7 @@ import {
 } from "@ant-design/icons";
 const { Search } = Input;
 
-const fetchFeishuAppAccessToken = async () => {
 
-  const responseAccessToken = await fetch("/open-apis/auth/v3/app_access_token/internal",
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          app_secret: 'D8ghPMwm5gnsxJVVqXo6hgEdpXIEcpls',
-          app_id: 'cli_a6258e69ff70900c',
-        }),
-
-      });
-  if (!responseAccessToken.ok) {
-    throw new Error(`HTTP error! status: ${responseAccessToken.status}`);
-  }
-
-  // 将响应体解析为 JSON
-  const accessToken = await responseAccessToken.json();
-  console.log(accessToken)
-
-  const appId = 'SRNFbD1xSasuOEsxeJFcR0dWn1d';
-  const responseTable = await fetch(`/open-apis/bitable/v1/apps/${appId}/tables`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + accessToken.app_access_token,
-        },
-
-      });
-
-  // 将响应体解析为 JSON
-  const tablesFeishu = await responseTable.json();
-  console.log(tablesFeishu)
-  const tableInfo = tablesFeishu.data.items.find((table) => table.name === "合同信息");
-  const tableId = tableInfo.table_id;
-
-  const recordsUrl = `/open-apis/bitable/v1/apps/${appId}/tables/${tableId}/records`;
-  const responseRecords = await fetch(recordsUrl,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + accessToken.app_access_token,
-        },
-
-      });
-
-  // 将响应体解析为 JSON
-  const recordsFeishu = await responseRecords.json();
-  console.log(recordsFeishu)
-
-  const authorityAreasSet = new Set();
-  recordsFeishu.data.items.forEach((record) => {
-    const authorityArea = record.fields["授权区域"];
-    if(authorityArea){
-      authorityArea.forEach((area) => {
-        authorityAreasSet.add(area);
-      });
-    }
-
-  });
-  console.log('authorityAreasSet-----',authorityAreasSet)
-
-
-  return [...authorityAreasSet];
-};
 
 const Page = () => {
   const scatterPlotRef = useRef(null);
@@ -95,7 +27,17 @@ const Page = () => {
   const [selectedCustTags, setSelectedCustTags] = useState([]);
   const [selectedRangeTags, setSelectedRangeTags] = useState([]);
   const [mousemSelectedData, setMousemSelectedData] = useState('');
+  const [markedArea, setMarkedArea] = useState([]);
+  const [projectsData, setProjectsData] = useState([]);
+  const [customnersData, setCustomnersData] = useState([]);
+  const [publishData, setPublishData] = useState([]);
+
+  const [feishuData, setFeishuData] = useState([]);
+  const [currentFeishuData, setCurrentFeishuData] = useState([]);
+
+
   useEffect(() => {
+    console.log('init......')
     init();
   }, []);
 
@@ -105,10 +47,116 @@ const Page = () => {
   const init = async () => {
     renderChart();
     renderMap();
+    fetchFeishuAppData();
   };
+
+  const fetchFeishuAppData = async () => {
+
+    const responseAccessToken = await fetch("/open-apis/auth/v3/app_access_token/internal",
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            app_secret: 'D8ghPMwm5gnsxJVVqXo6hgEdpXIEcpls',
+            app_id: 'cli_a6258e69ff70900c',
+          }),
+
+        });
+    if (!responseAccessToken.ok) {
+      throw new Error(`HTTP error! status: ${responseAccessToken.status}`);
+    }
+
+    // 将响应体解析为 JSON
+    const accessToken = await responseAccessToken.json();
+    console.log(accessToken)
+
+    const appId = 'SRNFbD1xSasuOEsxeJFcR0dWn1d';
+    const responseTable = await fetch(`/open-apis/bitable/v1/apps/${appId}/tables`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + accessToken.app_access_token,
+          },
+
+        });
+
+    // 将响应体解析为 JSON
+    const tablesFeishu = await responseTable.json();
+    console.log(tablesFeishu)
+    const tableInfo = tablesFeishu.data.items.find((table) => table.name === "合同信息");
+    const tableId = tableInfo.table_id;
+
+    const recordsUrl = `/open-apis/bitable/v1/apps/${appId}/tables/${tableId}/records`;
+    const responseRecords = await fetch(recordsUrl,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + accessToken.app_access_token,
+          },
+
+        });
+
+    // 将响应体解析为 JSON
+    const recordsFeishu = await responseRecords.json();
+    console.log(recordsFeishu)
+    setFeishuData(recordsFeishu.data.items)
+
+    const authorityAreasSet = new Set();
+    const projectsSet = new Set();
+    const customersSet = new Set();
+    const publishSet = new Set();
+    recordsFeishu.data.items.forEach((record) => {
+      const authorityArea = record.fields["授权区域"];
+      if(authorityArea){
+        authorityArea.forEach((area) => {
+          authorityAreasSet.add(area);
+        });
+      }
+
+      const projects = record.fields["签约项目"];
+      if(projects){
+        projectsSet.add(projects);
+        // projects.forEach((item) => {
+        //   projectsSet.add(item);
+        // });
+      }
+
+      const customers = record.fields["对方签约公司"];
+      if(customers){
+        customers.forEach((item) => {
+          customersSet.add(item);
+        });
+      }
+
+      const publish = record.fields["发行范围"];
+      if(publish){
+        publish.forEach((item) => {
+          publishSet.add(item);
+        });
+      }
+
+    });
+    console.log('authorityAreasSet-----',authorityAreasSet)
+
+    setMarkedArea([...authorityAreasSet])
+    setProjectsData([...projectsSet])
+    setCustomnersData([...customersSet])
+    setPublishData([...publishSet])
+
+
+    return [authorityAreasSet, projectsSet,customersSet];
+  };
+
+  // let markedArea = ["泰国", "菲律宾", "老挝", "缅甸", "柬埔寨"];
+  // let markedAreaFunction = React.useMemo(() => fetchFeishuAppAccessToken(), []);
+  // const markedArea = await markedAreaFunction;
   const renderMap = async () => {
     // let markedArea = ["泰国", "菲律宾", "老挝", "缅甸", "柬埔寨"];
-    let markedArea =  await fetchFeishuAppAccessToken();
+
     featureData.features = featureData.features.filter((feature) =>
       markedArea.includes(feature.properties.name)
     );
@@ -117,62 +165,11 @@ const Page = () => {
     map.centerAndZoom(point, 1);
     map.enableScrollWheelZoom(true);
     map.setMapStyleV2({ styleJson: window.whiteStyle });
-    if (!fillLayerRef.current) {
-      fillLayerRef.current = new window.BMapGL.FillLayer({
-        crs: "GCJ02",
-        enablePicked: true,
-        autoSelect: true,
-        pickWidth: 30,
-        pickHeight: 30,
-        selectedColor: "green", // 悬浮选中项颜色
-        border: true,
-        style: {
-          fillColor: [
-            "case",
-            ["boolean", ["feature-state", "picked"], false],
-            "red",
-            [
-              "match",
-              ["get", "name"],
-              "泰国",
-              "#ce4848",
-              "菲律宾",
-              "blue",
-              "老挝",
-              "blue",
-              "缅甸",
-              "#6704ff",
-              "柬埔寨",
-              "#6704ff",
-              "#6704ff", // 明确指定默认值为空
-            ],
-          ],
-          fillOpacity: 0.3,
-          strokeWeight: 1,
-          strokeColor: "white",
-        },
-      });
-      const messageDom = document.getElementById("message");
 
-      fillLayerRef.current.addEventListener("mousemove", function (e) {
-        const name = e?.value?.dataItem?.properties?.name;
-        if (name) {
-          messageDom.style.display = "block";
-          messageDom.style.top = e.pixel.y + "px";
-          messageDom.style.left = e.pixel.x + "px";
-          setMousemSelectedData(`区域：${name}`)
-          // this.updateState(e.value.dataIndex, { picked: true }, true);
-        } else {
-          if (messageDom?.style?.display) {
-            messageDom.style.display = "none";
-          }
-        }
-      });
-    }
-
-    map.addNormalLayer(fillLayerRef.current);
-    fillLayerRef.current.setData(featureData);
   };
+
+
+
   const renderChart = () => {
     if (!scatterPlotRef.current) {
       scatterPlotRef.current = new Scatter("chartContainer", {
@@ -252,6 +249,8 @@ const Page = () => {
     setIsDrawerOpens(_isDrawerOpens);
     console.log(isDrawerOpens);
   };
+
+  console.log('projectsData=====',projectsData)
   return (
     <div className="page">
       <div id="message" className="message">
@@ -276,38 +275,38 @@ const Page = () => {
           }}
         >
           <Card title="项目">
-            {cardData[0].map(({ id, name }) => (
+            {projectsData.map((item) => (
               <Tag.CheckableTag
-                key={id}
-                checked={selectedProjTags.includes(id)}
-                onChange={(checked) => handleChange(id, checked, "proj")}
+                key={item}
+                checked={selectedProjTags.includes(item)}
+                onChange={(checked) => handleChange(item, checked, "proj")}
                 color="red"
               >
-                {name}
+                {item}
               </Tag.CheckableTag>
             ))}
           </Card>
           <Card title="客户" style={{ margin: "12px 0" }}>
-            {cardData[1].map(({ id, name }) => (
+            {customnersData.map((item) => (
               <Tag.CheckableTag
-                key={id}
-                checked={selectedCustTags.includes(id)}
-                onChange={(checked) => handleChange(id, checked, "cust")}
+                key={item}
+                checked={selectedCustTags.includes(item)}
+                onChange={(checked) => handleChange(item, checked, "cust")}
                 color="red"
               >
-                {name}
+                {item}
               </Tag.CheckableTag>
             ))}
           </Card>
           <Card title="发行范围">
-            {cardData[2].map(({ id, name }) => (
+            {publishData.map((item) => (
               <Tag.CheckableTag
-                key={id}
-                checked={selectedRangeTags.includes(id)}
-                onChange={(checked) => handleChange(id, checked, "range")}
+                key={item}
+                checked={selectedRangeTags.includes(item)}
+                onChange={(checked) => handleChange(item, checked, "range")}
                 color="red"
               >
-                {name}
+                {item}
               </Tag.CheckableTag>
             ))}
           </Card>
@@ -363,5 +362,7 @@ const Page = () => {
     </div>
   );
 };
+
+// const MemoPage = React.memo(Page);
 
 export default Page;
