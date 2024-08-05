@@ -24,6 +24,7 @@ const Page = () => {
   const [selectedProjTags, setSelectedProjTags] = useState([]);
   const [selectedCustTags, setSelectedCustTags] = useState([]);
   const [selectedRangeTags, setSelectedRangeTags] = useState([]);
+  const [mousemSelectedData, setMousemSelectedData] = useState('');
   useEffect(() => {
     init();
   }, []);
@@ -83,36 +84,17 @@ const Page = () => {
       const messageDom = document.getElementById("message");
 
       fillLayerRef.current.addEventListener("mousemove", function (e) {
-        const name = e?.value?.dataItem?.properties?.name
-        if(name) {
+        const name = e?.value?.dataItem?.properties?.name;
+        if (name) {
           messageDom.style.display = "block";
           messageDom.style.top = e.pixel.y + "px";
           messageDom.style.left = e.pixel.x + "px";
+          setMousemSelectedData(`区域：${name}`)
           // this.updateState(e.value.dataIndex, { picked: true }, true);
         } else {
-          if(messageDom?.style?.display ) {messageDom.style.display = "none";}
-        }
-        // if (e.value.dataIndex !== -1 && e.value.dataItem) {
-        //   console.log("click", e.value.dataItem);
-        //   console.log(e.pixel);
-        //   const messageDom = document.getElementById("message");
-        //   messageDom.style.display = "block";
-        //   messageDom.style.top = e.pixel.y + "px";
-        //   messageDom.style.left = e.pixel.x + "px";
-        //   // this.updateState(e.value.dataIndex, { picked: true }, true);
-        // }
-      });
-      fillLayerRef.current.addEventListener("mouseout", function (e) {
-        console.log(222);
-        return;
-        if (e.value.dataIndex !== -1 && e.value.dataItem) {
-          console.log("click", e.value.dataItem);
-          console.log(e.pixel);
-          const messageDom = document.getElementById("message");
-          messageDom.style.display = "block";
-          messageDom.style.top = e.pixel.y + "px";
-          messageDom.style.left = e.pixel.x + "px";
-          // this.updateState(e.value.dataIndex, { picked: true }, true);
+          if (messageDom?.style?.display) {
+            messageDom.style.display = "none";
+          }
         }
       });
     }
@@ -202,7 +184,7 @@ const Page = () => {
   return (
     <div className="page">
       <div id="message" className="message">
-        <span>项目名称: 上海公司</span>
+        <span>{mousemSelectedData}</span>
       </div>
       <div className="area title">
         <img src={lemonIcon} alt="" />
