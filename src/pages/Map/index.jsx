@@ -322,23 +322,21 @@ const Page = () => {
       }))
       .filter(
         (v) =>
-          // 没选择就默认全选了
-          (_selectedProjTags.length === 0 &&
-            _selectedCustTags.length === 0 &&
-            _selectedRangeTags.length === 0) || // 项目
-          (_selectedProjTags.includes(v?.fields?.["签约项目"]) &&
-            // 客户
-            (v?.fields?.["对方签约公司"]?.some?.((value) =>
-              _selectedCustTags.includes(value)
-            ) ||
-              (v?.fields?.["对方签约公司"].length === 0 &&
-                _selectedCustTags.length === 0)) &&
-            // 范围
-            (v?.fields?.["发行范围"]?.some?.((value) =>
-              _selectedRangeTags.includes(value)
-            ) ||
-              (v?.fields?.["发行范围"].length === 0 &&
-                _selectedRangeTags.length === 0)))
+          // 项目
+          (_selectedProjTags.length === 0 ||_selectedProjTags.includes(v?.fields?.["签约项目"])) &&
+          // 客户
+          (_selectedCustTags.length === 0 ||v?.fields?.["对方签约公司"]?.some?.((value) =>
+            _selectedCustTags.includes(value)
+          ) ||
+            (v?.fields?.["对方签约公司"].length === 0 &&
+              _selectedCustTags.length === 0)) &&
+          // 范围
+          (_selectedRangeTags.length === 0 ||v?.fields?.["发行范围"]?.some?.((value) =>
+            _selectedRangeTags.includes(value)
+          ) ||
+            (v?.fields?.["发行范围"].length === 0 &&
+              _selectedRangeTags.length === 0))
+          // end
       );
     setCurrentFeishuData(_currentFeishuData);
   };
