@@ -13,9 +13,8 @@ import {
 } from "@ant-design/icons";
 const { Search } = Input;
 
-
-
 const Page = () => {
+  const mapRef = useRef(null);
   const scatterPlotRef = useRef(null);
   const fillLayerRef = useRef(null);
   const [dataSource, setDataSource] = useState(tableData);
@@ -26,84 +25,87 @@ const Page = () => {
   const [selectedProjTags, setSelectedProjTags] = useState([]);
   const [selectedCustTags, setSelectedCustTags] = useState([]);
   const [selectedRangeTags, setSelectedRangeTags] = useState([]);
-  const [mousemSelectedData, setMousemSelectedData] = useState('');
+  const [mousemSelectedData, setMousemSelectedData] = useState("");
   const [markedArea, setMarkedArea] = useState([]);
   const [projectsData, setProjectsData] = useState([]);
   const [customnersData, setCustomnersData] = useState([]);
   const [publishData, setPublishData] = useState([]);
 
-  const [feishuData, setFeishuData] = useState([]);
+  const feishuDataRef = useRef([]);
   const [currentFeishuData, setCurrentFeishuData] = useState([]);
 
-
   useEffect(() => {
-    console.log('init......')
     init();
   }, []);
 
-  // icon: <FileOutlined />,
-  // icon: <FolderOpenTwoTone />,
+  useEffect(() => {
+    const area =
+      currentFeishuData?.map?.((v) => v?.fields?.["授权区域"])?.flat() || [];
+    console.log(area);
+    renderMap(area);
+  }, [currentFeishuData]);
 
   const init = async () => {
     renderChart();
-    renderMap();
+    initMap();
     fetchFeishuAppData();
   };
 
   const fetchFeishuAppData = async () => {
-
-    const responseAccessToken = await fetch("/open-apis/auth/v3/app_access_token/internal",
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            app_secret: 'D8ghPMwm5gnsxJVVqXo6hgEdpXIEcpls',
-            app_id: 'cli_a6258e69ff70900c',
-          }),
-
-        });
+    const responseAccessToken = await fetch(
+      "/open-apis/auth/v3/app_access_token/internal",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          app_secret: "D8ghPMwm5gnsxJVVqXo6hgEdpXIEcpls",
+          app_id: "cli_a6258e69ff70900c",
+        }),
+      }
+    );
     if (!responseAccessToken.ok) {
       throw new Error(`HTTP error! status: ${responseAccessToken.status}`);
     }
 
     // 将响应体解析为 JSON
     const accessToken = await responseAccessToken.json();
-    console.log(accessToken)
+    console.log(accessToken);
 
-    const appId = 'SRNFbD1xSasuOEsxeJFcR0dWn1d';
-    const responseTable = await fetch(`/open-apis/bitable/v1/apps/${appId}/tables`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + accessToken.app_access_token,
-          },
-
-        });
+    const appId = "SRNFbD1xSasuOEsxeJFcR0dWn1d";
+    const responseTable = await fetch(
+      `/open-apis/bitable/v1/apps/${appId}/tables`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + accessToken.app_access_token,
+        },
+      }
+    );
 
     // 将响应体解析为 JSON
     const tablesFeishu = await responseTable.json();
-    console.log(tablesFeishu)
-    const tableInfo = tablesFeishu.data.items.find((table) => table.name === "合同信息");
+    console.log(tablesFeishu);
+    const tableInfo = tablesFeishu.data.items.find(
+      (table) => table.name === "合同信息"
+    );
     const tableId = tableInfo.table_id;
 
     const recordsUrl = `/open-apis/bitable/v1/apps/${appId}/tables/${tableId}/records`;
-    const responseRecords = await fetch(recordsUrl,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + accessToken.app_access_token,
-          },
-
-        });
+    const responseRecords = await fetch(recordsUrl, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + accessToken.app_access_token,
+      },
+    });
 
     // 将响应体解析为 JSON
     const recordsFeishu = await responseRecords.json();
-    console.log(recordsFeishu)
-    setFeishuData(recordsFeishu.data.items)
+    console.log(recordsFeishu);
+    feishuDataRef.current = recordsFeishu.data.items;
 
     const authorityAreasSet = new Set();
     const projectsSet = new Set();
@@ -111,14 +113,14 @@ const Page = () => {
     const publishSet = new Set();
     recordsFeishu.data.items.forEach((record) => {
       const authorityArea = record.fields["授权区域"];
-      if(authorityArea){
+      if (authorityArea) {
         authorityArea.forEach((area) => {
           authorityAreasSet.add(area);
         });
       }
 
       const projects = record.fields["签约项目"];
-      if(projects){
+      if (projects) {
         projectsSet.add(projects);
         // projects.forEach((item) => {
         //   projectsSet.add(item);
@@ -126,49 +128,127 @@ const Page = () => {
       }
 
       const customers = record.fields["对方签约公司"];
-      if(customers){
+      if (customers) {
         customers.forEach((item) => {
           customersSet.add(item);
         });
       }
 
       const publish = record.fields["发行范围"];
-      if(publish){
+      if (publish) {
         publish.forEach((item) => {
           publishSet.add(item);
         });
       }
-
     });
-    console.log('authorityAreasSet-----',authorityAreasSet)
+    console.log("authorityAreasSet-----", authorityAreasSet);
 
-    setMarkedArea([...authorityAreasSet])
-    setProjectsData([...projectsSet])
-    setCustomnersData([...customersSet])
-    setPublishData([...publishSet])
+    setMarkedArea([...authorityAreasSet]);
+    setProjectsData([...projectsSet]);
+    setCustomnersData([...customersSet]);
+    setPublishData([...publishSet]);
 
+    console.log("projectsSetprojectsSet", projectsSet);
+    //   // 默认选中第一个
+    //   handleChange([...projectsSet][0], true, "proj");
+    //   handleChange([...customersSet][0], true, "cust");
+    //   handleChange([...publishSet][0], true, "range");
 
-    return [authorityAreasSet, projectsSet,customersSet];
+    return [authorityAreasSet, projectsSet, customersSet];
   };
 
-  // let markedArea = ["泰国", "菲律宾", "老挝", "缅甸", "柬埔寨"];
-  // let markedAreaFunction = React.useMemo(() => fetchFeishuAppAccessToken(), []);
-  // const markedArea = await markedAreaFunction;
-  const renderMap = async () => {
-    // let markedArea = ["泰国", "菲律宾", "老挝", "缅甸", "柬埔寨"];
+  const initMap = async () => {
+    mapRef.current = new window.BMapGL.Map("allmap");
+    let point = new window.BMapGL.Point(116.414, 39.915);
+    mapRef.current.centerAndZoom(point, 1);
+    mapRef.current.enableScrollWheelZoom(true);
+    mapRef.current.setMapStyleV2({ styleJson: window.whiteStyle });
+  };
 
-    featureData.features = featureData.features.filter((feature) =>
+  const getFillColor = () => {};
+
+  const renderMap = async (markedArea) => {
+    mapRef.current.removeNormalLayer(fillLayerRef.current);
+    fillLayerRef.current = new window.BMapGL.FillLayer({
+      crs: "GCJ02",
+      enablePicked: true,
+      autoSelect: true,
+      pickWidth: 30,
+      pickHeight: 30,
+      selectedColor: "orange", // 悬浮选中项颜色
+      border: true,
+      style: {
+        fillColor: [
+          "case",
+          ["boolean", ["feature-state", "picked"], false],
+          "red",
+          [
+            "match",
+            ["get", "name"],
+            "泰国",
+            "green",
+            "菲律宾",
+            "lightgrey",
+            "日本",
+            "blue",
+            "缅甸",
+            "cyan",
+            "中国",
+            "red",
+            "darkviolet", // 明确指定默认值为空
+          ],
+        ],
+        fillOpacity: 0.3,
+        strokeWeight: 1,
+        strokeColor: "white",
+      },
+    });
+    const messageDom = document.getElementById("message");
+    fillLayerRef.current.addEventListener("mousemove", function (e) {
+      const name = e?.value?.dataItem?.properties?.name;
+      if (name) {
+        messageDom.style.display = "block";
+        messageDom.style.top = e.pixel.y + "px";
+        messageDom.style.left = e.pixel.x + "px";
+
+        // 获取数据
+        const data = feishuDataRef.current.find((v) =>
+          v?.fields?.["授权区域"]?.includes(name)
+        );
+        console.log(data);
+        setMousemSelectedData(
+          <div className="mouse_message">
+            <p>项目名称：{data?.fields?.["签约项目"]}</p>
+            <p>客户名称：{data?.fields?.["对方签约公司"]}</p>
+            <p>金额：${data?.fields?.["美元总价"]?.toLocaleString()}</p>
+            <p>
+              签约日期：
+              {data?.fields?.["合同签约时间"] &&
+                new Date(data?.fields?.["合同签约时间"]).toLocaleDateString()}
+            </p>
+            <p>
+              到期日期：
+              {data?.fields?.["到期时间"] &&
+                new Date(data?.fields?.["到期时间"]).toLocaleDateString()}
+            </p>
+          </div>
+        );
+
+        // this.updateState(e.value.dataIndex, { picked: true }, true);
+      } else {
+        if (messageDom?.style?.display) {
+          messageDom.style.display = "none";
+        }
+      }
+    });
+
+    mapRef.current.addNormalLayer(fillLayerRef.current);
+    const _featureData = JSON.parse(JSON.stringify(featureData));
+    _featureData.features = _featureData.features.filter((feature) =>
       markedArea.includes(feature.properties.name)
     );
-    const map = new window.BMapGL.Map("allmap");
-    let point = new window.BMapGL.Point(116.414, 39.915);
-    map.centerAndZoom(point, 1);
-    map.enableScrollWheelZoom(true);
-    map.setMapStyleV2({ styleJson: window.whiteStyle });
-
+    fillLayerRef.current.setData(_featureData);
   };
-
-
 
   const renderChart = () => {
     if (!scatterPlotRef.current) {
@@ -222,18 +302,58 @@ const Page = () => {
       scatterPlotRef.current.render();
     }
   };
+
+  const handlefeishuData = (data, type) => {
+    let _selectedProjTags = type === "proj" ? data : selectedProjTags;
+    let _selectedCustTags = type === "cust" ? data : selectedCustTags;
+    let _selectedRangeTags = type === "range" ? data : selectedRangeTags;
+
+    //   签约项目 对方签约公司 [] 发行范围 []
+    const _currentFeishuData = feishuDataRef.current
+      .filter((v) => !!v?.fields?.["OA合同编号"])
+      .map((v) => ({
+        ...v,
+        fields: {
+          ...v.fields,
+          对方签约公司: v.fields?.["对方签约公司"] || [],
+          发行范围: v.fields?.["发行范围"] || [],
+        },
+      }))
+      .filter(
+        (v) =>
+          // 项目
+          _selectedProjTags.includes(v?.fields?.["签约项目"]) &&
+          // 客户
+          (v?.fields?.["对方签约公司"]?.some?.((value) =>
+            _selectedCustTags.includes(value)
+          ) ||
+            (v?.fields?.["对方签约公司"].length === 0 &&
+              _selectedCustTags.length === 0)) &&
+          // 范围
+          (v?.fields?.["发行范围"]?.some?.((value) =>
+            _selectedRangeTags.includes(value)
+          ) ||
+            (v?.fields?.["发行范围"].length === 0 &&
+              _selectedRangeTags.length === 0))
+      );
+    console.log(_currentFeishuData);
+    setCurrentFeishuData(_currentFeishuData);
+  };
   const handleChange = (tag, checked, type) => {
+    console.log(tag, checked, type);
     if (type === "proj") {
       const nextSelectedTags = checked
         ? [...selectedProjTags, tag]
         : selectedProjTags.filter((t) => t !== tag);
       setSelectedProjTags(nextSelectedTags);
+      handlefeishuData(nextSelectedTags, "proj");
     }
     if (type === "cust") {
       const nextSelectedTags = checked
         ? [...selectedCustTags, tag]
         : selectedCustTags.filter((t) => t !== tag);
       setSelectedCustTags(nextSelectedTags);
+      handlefeishuData(nextSelectedTags, "cust");
     }
 
     if (type === "range") {
@@ -241,6 +361,7 @@ const Page = () => {
         ? [...selectedRangeTags, tag]
         : selectedRangeTags.filter((t) => t !== tag);
       setSelectedRangeTags(nextSelectedTags);
+      handlefeishuData(nextSelectedTags, "range");
     }
   };
   const onClickonDrawerOpen = (index) => {
@@ -250,7 +371,6 @@ const Page = () => {
     console.log(isDrawerOpens);
   };
 
-  console.log('projectsData=====',projectsData)
   return (
     <div className="page">
       <div id="message" className="message">
@@ -265,7 +385,11 @@ const Page = () => {
         style={{ height: isDrawerOpens[0] ? "calc(100% - 44px)" : "16px" }}
       >
         <div className="drawer_icon" onClick={() => onClickonDrawerOpen(0)}>
-          {isDrawerOpens[0] ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />}
+          {isDrawerOpens[0] ? (
+            <MenuFoldOutlined width={"10px"} />
+          ) : (
+            <MenuUnfoldOutlined width={10} />
+          )}
         </div>
         <div
           className="cards"

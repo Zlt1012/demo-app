@@ -16,7 +16,9 @@
     position: absolute;
     z-index: 11;
     background: #fff;
-    padding: 12px;
+    padding: 0 12px;
+    border-radius: 8px;
+    opacity: 0.7
   }
   .area {
     position: absolute;
@@ -49,6 +51,13 @@
     border-radius: 4px;
     .cards {
       margin-top: 12px;
+      .ant-card-head {
+        min-height: 40px
+      }
+      .ant-tag {
+        width: 165px;
+        white-space: normal;
+      }
       .ant-tag-checkable-checked {
         background-color: orange;
       }
@@ -57,7 +66,7 @@
         span {
           margin-bottom: 4px;
         }
-      } 
+      }
     }
   }
 
