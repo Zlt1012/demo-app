@@ -15,7 +15,7 @@ const Page = () => {
   const fillLayerRef = useRef(null);
   const [dataSource, setDataSource] = useState(tableData);
   const [chartData, setChartData] = useState(chartData2);
-  const [isDrawerOpens, setIsDrawerOpens] = useState([true, true]);
+  const [isDrawerOpens, setIsDrawerOpens] = useState([false, false]);
   const [selectedProjTags, setSelectedProjTags] = useState([]);
   const [selectedCustTags, setSelectedCustTags] = useState([]);
   const [selectedRangeTags, setSelectedRangeTags] = useState([]);
@@ -199,8 +199,15 @@ const Page = () => {
       const name = e?.value?.dataItem?.properties?.name;
       if (name) {
         messageDom.style.display = "block";
-        messageDom.style.top = e.pixel.y + "px";
-        messageDom.style.left = e.pixel.x + "px";
+        messageDom.style.left = e.pixel.x + 6 + "px";
+        // 剩余的高度
+        const restHeight = window.innerHeight - e.pixel.y;
+        // 剩余的高度 > messageDom高度（256px） 就向上移动
+        if (restHeight > 256) {
+          messageDom.style.top = e.pixel.y + "px";
+        } else {
+          messageDom.style.top = e.pixel.y + restHeight - 256 + "px";
+        }
 
         // 获取数据
         const list = currentFeishuData.filter((v) =>
@@ -322,21 +329,24 @@ const Page = () => {
       }))
       .filter(
         (v) =>
-          // 项目
-          (_selectedProjTags.length === 0 ||_selectedProjTags.includes(v?.fields?.["签约项目"])) &&
-          // 客户
-          (_selectedCustTags.length === 0 ||v?.fields?.["对方签约公司"]?.some?.((value) =>
-            _selectedCustTags.includes(value)
-          ) ||
+          // 项目 // 没选择=全选中，不算查询条件
+          (_selectedProjTags.length === 0 ||
+            _selectedProjTags.includes(v?.fields?.["签约项目"])) &&
+          // 客户// 没选择=全选中，不算查询条件
+          (_selectedCustTags.length === 0 ||
+            v?.fields?.["对方签约公司"]?.some?.((value) =>
+              _selectedCustTags.includes(value)
+            ) ||
             (v?.fields?.["对方签约公司"].length === 0 &&
               _selectedCustTags.length === 0)) &&
-          // 范围
-          (_selectedRangeTags.length === 0 ||v?.fields?.["发行范围"]?.some?.((value) =>
-            _selectedRangeTags.includes(value)
-          ) ||
+          // 范围// 没选择=全选中，不算查询条件
+          (_selectedRangeTags.length === 0 ||
+            v?.fields?.["发行范围"]?.some?.((value) =>
+              _selectedRangeTags.includes(value)
+            ) ||
             (v?.fields?.["发行范围"].length === 0 &&
               _selectedRangeTags.length === 0))
-          // end
+        // end
       );
     setCurrentFeishuData(_currentFeishuData);
   };
