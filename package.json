@@ -23,7 +23,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "analyze": "source-map-explorer 'build/static/js/*.js'"
+    "analyze": "source-map-explorer 'build/static/js/*.js'",
+    "updateWeb": "scp -r /Users/zhangjiaqiang/my/blockchain/react-app/build/* ssh zyq@43.138.81.208:/usr/share/nginx/html/map"
   },
   "eslintConfig": {
     "extends": [

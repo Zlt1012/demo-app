@@ -1,16 +1,12 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Input, Table, Tree, Tag, Card } from "antd";
+import { Input, Table, Tabs, Tag, Card } from "antd";
 import featureData from "./world.zh.json";
 import { Scatter } from "@antv/g2plot";
 import lemonIcon from "../../assets/icon/icon-lemon.svg";
 import { columns } from "./config";
-import { tableData, treeData2, chartData2, cardsData } from "./mockData";
+import { tableData, chartData2 } from "./mockData";
 import "./style.css";
-import {
-  DownOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-} from "@ant-design/icons";
+import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 const { Search } = Input;
 
 const Page = () => {
@@ -18,10 +14,8 @@ const Page = () => {
   const scatterPlotRef = useRef(null);
   const fillLayerRef = useRef(null);
   const [dataSource, setDataSource] = useState(tableData);
-  const [treeData, setTreeData] = useState(treeData2);
   const [chartData, setChartData] = useState(chartData2);
   const [isDrawerOpens, setIsDrawerOpens] = useState([true, true]);
-  const [cardData, setCardData] = useState(cardsData);
   const [selectedProjTags, setSelectedProjTags] = useState([]);
   const [selectedCustTags, setSelectedCustTags] = useState([]);
   const [selectedRangeTags, setSelectedRangeTags] = useState([]);
@@ -149,11 +143,8 @@ const Page = () => {
     setPublishData([...publishSet]);
 
     console.log("projectsSetprojectsSet", projectsSet);
-    //   // 默认选中第一个
-    //   handleChange([...projectsSet][0], true, "proj");
-    //   handleChange([...customersSet][0], true, "cust");
-    //   handleChange([...publishSet][0], true, "range");
-
+    // 默认显示全部项目的区域
+    handlefeishuData();
     return [authorityAreasSet, projectsSet, customersSet];
   };
 
@@ -212,26 +203,36 @@ const Page = () => {
         messageDom.style.left = e.pixel.x + "px";
 
         // 获取数据
-        const data = feishuDataRef.current.find((v) =>
+        const list = currentFeishuData.filter((v) =>
           v?.fields?.["授权区域"]?.includes(name)
         );
-        console.log(data);
         setMousemSelectedData(
-          <div className="mouse_message">
-            <p>项目名称：{data?.fields?.["签约项目"]}</p>
-            <p>客户名称：{data?.fields?.["对方签约公司"]}</p>
-            <p>金额：${data?.fields?.["美元总价"]?.toLocaleString()}</p>
-            <p>
-              签约日期：
-              {data?.fields?.["合同签约时间"] &&
-                new Date(data?.fields?.["合同签约时间"]).toLocaleDateString()}
-            </p>
-            <p>
-              到期日期：
-              {data?.fields?.["到期时间"] &&
-                new Date(data?.fields?.["到期时间"]).toLocaleDateString()}
-            </p>
-          </div>
+          <Tabs
+            defaultActiveKey="1"
+            items={list.map((data, i) => ({
+              key: i,
+              label: data?.fields?.["签约项目"],
+              children: (
+                <div className="mouse_message">
+                  <p>项目名称：{data?.fields?.["签约项目"]}</p>
+                  <p>客户名称：{data?.fields?.["对方签约公司"]}</p>
+                  <p>金额：${data?.fields?.["美元总价"]?.toLocaleString()}</p>
+                  <p>
+                    签约日期：
+                    {data?.fields?.["合同签约时间"] &&
+                      new Date(
+                        data?.fields?.["合同签约时间"]
+                      ).toLocaleDateString()}
+                  </p>
+                  <p>
+                    到期日期：
+                    {data?.fields?.["到期时间"] &&
+                      new Date(data?.fields?.["到期时间"]).toLocaleDateString()}
+                  </p>
+                </div>
+              ),
+            }))}
+          />
         );
 
         // this.updateState(e.value.dataIndex, { picked: true }, true);
@@ -303,11 +304,11 @@ const Page = () => {
     }
   };
 
-  const handlefeishuData = (data, type) => {
+  const handlefeishuData = (data = [], type = "") => {
+    // allData有值就是初始化时全选，没值就是正常逻辑选择时
     let _selectedProjTags = type === "proj" ? data : selectedProjTags;
     let _selectedCustTags = type === "cust" ? data : selectedCustTags;
     let _selectedRangeTags = type === "range" ? data : selectedRangeTags;
-
     //   签约项目 对方签约公司 [] 发行范围 []
     const _currentFeishuData = feishuDataRef.current
       .filter((v) => !!v?.fields?.["OA合同编号"])
@@ -321,22 +322,24 @@ const Page = () => {
       }))
       .filter(
         (v) =>
-          // 项目
-          _selectedProjTags.includes(v?.fields?.["签约项目"]) &&
-          // 客户
-          (v?.fields?.["对方签约公司"]?.some?.((value) =>
-            _selectedCustTags.includes(value)
-          ) ||
-            (v?.fields?.["对方签约公司"].length === 0 &&
-              _selectedCustTags.length === 0)) &&
-          // 范围
-          (v?.fields?.["发行范围"]?.some?.((value) =>
-            _selectedRangeTags.includes(value)
-          ) ||
-            (v?.fields?.["发行范围"].length === 0 &&
-              _selectedRangeTags.length === 0))
+          // 没选择就默认全选了
+          (_selectedProjTags.length === 0 &&
+            _selectedCustTags.length === 0 &&
+            _selectedRangeTags.length === 0) || // 项目
+          (_selectedProjTags.includes(v?.fields?.["签约项目"]) &&
+            // 客户
+            (v?.fields?.["对方签约公司"]?.some?.((value) =>
+              _selectedCustTags.includes(value)
+            ) ||
+              (v?.fields?.["对方签约公司"].length === 0 &&
+                _selectedCustTags.length === 0)) &&
+            // 范围
+            (v?.fields?.["发行范围"]?.some?.((value) =>
+              _selectedRangeTags.includes(value)
+            ) ||
+              (v?.fields?.["发行范围"].length === 0 &&
+                _selectedRangeTags.length === 0)))
       );
-    console.log(_currentFeishuData);
     setCurrentFeishuData(_currentFeishuData);
   };
   const handleChange = (tag, checked, type) => {
