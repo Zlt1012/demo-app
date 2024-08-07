@@ -2,12 +2,31 @@ import React, { useEffect, useState, useRef } from "react";
 import { Input, Table, Tabs, Tag, Card } from "antd";
 import featureData from "./world.zh.json";
 import { Scatter } from "@antv/g2plot";
+import dayjs from "dayjs";
 import lemonIcon from "../../assets/icon/icon-lemon.svg";
 import { columns } from "./config";
 import { tableData, chartData2 } from "./mockData";
 import "./style.css";
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
-const { Search } = Input;
+
+const ENUM_COLOR = [
+  "red",
+  "pink",
+  "blue",
+  "purple",
+  "cyan",
+  "yellow",
+  "lightblue",
+  "darkblue",
+  "fuchsia",
+  "hotpink",
+  "darkgreen",
+  "lightgreen",
+  "lightyellow",
+  "navy",
+  "lavender",
+  "gold",
+];
 
 const Page = () => {
   const mapRef = useRef(null);
@@ -19,11 +38,17 @@ const Page = () => {
   const [selectedProjTags, setSelectedProjTags] = useState([]);
   const [selectedCustTags, setSelectedCustTags] = useState([]);
   const [selectedRangeTags, setSelectedRangeTags] = useState([]);
+  const [selectedStatusTags, setSelectedStatusTags] = useState([]);
+  const [selectedOnlyOneTags, setSelectedOnlyOneTags] = useState([]);
+  const [selectedEndDateTags, setSelectedEndDateTags] = useState([]);
   const [mousemSelectedData, setMousemSelectedData] = useState("");
   const [markedArea, setMarkedArea] = useState([]);
   const [projectsData, setProjectsData] = useState([]);
   const [customnersData, setCustomnersData] = useState([]);
   const [publishData, setPublishData] = useState([]);
+  const [onlyOneData, setOnlyOneData] = useState([]); // 是否独家签约
+  const [endDateData, setEndDateData] = useState(["近半年", "近一年"]); // 签约到期时间
+  const [statusData, setStatusData] = useState([]); // 项目状态
 
   const feishuDataRef = useRef([]);
   const [currentFeishuData, setCurrentFeishuData] = useState([]);
@@ -105,35 +130,37 @@ const Page = () => {
     const projectsSet = new Set();
     const customersSet = new Set();
     const publishSet = new Set();
+    const statusSet = new Set();
+    const onlyOneSet = new Set();
     recordsFeishu.data.items.forEach((record) => {
-      const authorityArea = record.fields["授权区域"];
+      const authorityArea = record.fields?.["授权区域"];
       if (authorityArea) {
         authorityArea.forEach((area) => {
           authorityAreasSet.add(area);
         });
       }
 
-      const projects = record.fields["签约项目"];
-      if (projects) {
-        projectsSet.add(projects);
-        // projects.forEach((item) => {
-        //   projectsSet.add(item);
-        // });
-      }
+      const projects = record.fields?.["签约项目"];
+      projects && projectsSet.add(projects);
 
-      const customers = record.fields["对方签约公司"];
+      const customers = record.fields?.["对方签约公司"];
       if (customers) {
         customers.forEach((item) => {
           customersSet.add(item);
         });
       }
 
-      const publish = record.fields["发行范围"];
+      const publish = record.fields?.["发行范围"];
       if (publish) {
         publish.forEach((item) => {
           publishSet.add(item);
         });
       }
+      const status = record.fields?.["项目状态"];
+      status && statusSet.add(status);
+
+      const onlyOne = record.fields?.["是否独家签约"];
+      onlyOne && onlyOneSet.add(onlyOne);
     });
     console.log("authorityAreasSet-----", authorityAreasSet);
 
@@ -141,6 +168,8 @@ const Page = () => {
     setProjectsData([...projectsSet]);
     setCustomnersData([...customersSet]);
     setPublishData([...publishSet]);
+    setStatusData([...statusSet]);
+    setOnlyOneData([...onlyOneSet]);
 
     console.log("projectsSetprojectsSet", projectsSet);
     // 默认显示全部项目的区域
@@ -156,9 +185,16 @@ const Page = () => {
     mapRef.current.setMapStyleV2({ styleJson: window.whiteStyle });
   };
 
-  const getFillColor = () => {};
+  // 获取国家的颜色
+  const getFillColor = (markedArea) => {
+    return markedArea
+      .filter((v) => !!v)
+      .map((value, index) => [value, ENUM_COLOR[index % markedArea.length]])
+      .flat();
+  };
 
   const renderMap = async (markedArea) => {
+    const fillColor = getFillColor(markedArea);
     mapRef.current.removeNormalLayer(fillLayerRef.current);
     fillLayerRef.current = new window.BMapGL.FillLayer({
       crs: "GCJ02",
@@ -176,17 +212,10 @@ const Page = () => {
           [
             "match",
             ["get", "name"],
-            "泰国",
-            "green",
-            "菲律宾",
-            "lightgrey",
-            "日本",
-            "blue",
-            "缅甸",
-            "cyan",
+            ...fillColor,
             "中国",
             "red",
-            "darkviolet", // 明确指定默认值为空
+            "green", // 明确指定默认值为空
           ],
         ],
         fillOpacity: 0.3,
@@ -310,15 +339,35 @@ const Page = () => {
       scatterPlotRef.current.render();
     }
   };
+  // 判断是否半年、一年
+  const verifyTime = (selectedData, timestamp) => {
+    const date = dayjs(timestamp);
+    const now = dayjs();
+    const sixMonthsAgo = now.subtract(6, "month");
+    const oneYearAgo = now.subtract(1, "year");
+    return selectedData.some((v) => {
+      let isPass = false;
+      if (v === "近半年") {
+        isPass = date.isAfter(sixMonthsAgo) && date.isBefore(now);
+      }
+      if (v === "近一年") {
+        isPass = date.isAfter(oneYearAgo) && date.isBefore(now);
+      }
+      return isPass;
+    });
+  };
 
   const handlefeishuData = (data = [], type = "") => {
     // allData有值就是初始化时全选，没值就是正常逻辑选择时
     let _selectedProjTags = type === "proj" ? data : selectedProjTags;
     let _selectedCustTags = type === "cust" ? data : selectedCustTags;
     let _selectedRangeTags = type === "range" ? data : selectedRangeTags;
+    let _selectedStatusTags = type === "status" ? data : selectedStatusTags;
+    let _selectedOnlyOneTags = type === "onlyOne" ? data : selectedOnlyOneTags;
+    let _selectedEndDateTags = type === "endDate" ? data : selectedEndDateTags;
     //   签约项目 对方签约公司 [] 发行范围 []
     const _currentFeishuData = feishuDataRef.current
-      .filter((v) => !!v?.fields?.["OA合同编号"])
+      .filter((v) => !!v?.fields?.["签约项目"])
       .map((v) => ({
         ...v,
         fields: {
@@ -345,13 +394,20 @@ const Page = () => {
               _selectedRangeTags.includes(value)
             ) ||
             (v?.fields?.["发行范围"].length === 0 &&
-              _selectedRangeTags.length === 0))
-        // end
+              _selectedRangeTags.length === 0)) &&
+          // 状态
+          (_selectedStatusTags.length === 0 ||
+            _selectedStatusTags.includes(v?.fields?.["项目状态"])) &&
+          // 独家
+          (_selectedOnlyOneTags.length === 0 ||
+            _selectedOnlyOneTags.includes(v?.fields?.["是否独家签约"])) &&
+          // 到期时间
+          (_selectedEndDateTags.length === 0 ||
+            verifyTime(_selectedEndDateTags, v?.fields?.["到期时间"]))
       );
     setCurrentFeishuData(_currentFeishuData);
   };
   const handleChange = (tag, checked, type) => {
-    console.log(tag, checked, type);
     if (type === "proj") {
       const nextSelectedTags = checked
         ? [...selectedProjTags, tag]
@@ -374,6 +430,27 @@ const Page = () => {
       setSelectedRangeTags(nextSelectedTags);
       handlefeishuData(nextSelectedTags, "range");
     }
+    if (type === "status") {
+      const nextSelectedTags = checked
+        ? [...selectedStatusTags, tag]
+        : selectedStatusTags.filter((t) => t !== tag);
+      setSelectedStatusTags(nextSelectedTags);
+      handlefeishuData(nextSelectedTags, "status");
+    }
+    if (type === "onlyOne") {
+      const nextSelectedTags = checked
+        ? [...selectedOnlyOneTags, tag]
+        : selectedOnlyOneTags.filter((t) => t !== tag);
+      setSelectedOnlyOneTags(nextSelectedTags);
+      handlefeishuData(nextSelectedTags, "onlyOne");
+    }
+    if (type === "endDate") {
+      const nextSelectedTags = checked
+        ? [...selectedEndDateTags, tag]
+        : selectedEndDateTags.filter((t) => t !== tag);
+      setSelectedEndDateTags(nextSelectedTags);
+      handlefeishuData(nextSelectedTags, "endDate");
+    }
   };
   const onClickonDrawerOpen = (index) => {
     const _isDrawerOpens = [...isDrawerOpens];
@@ -389,19 +466,25 @@ const Page = () => {
       </div>
       <div className="area title">
         <img src={lemonIcon} alt="" />
-        地区数据
+        柠萌海外发行情况
       </div>
       <div
         className="left"
         style={{ height: isDrawerOpens[0] ? "calc(100% - 44px)" : "16px" }}
       >
-        <div className="drawer_icon" onClick={() => onClickonDrawerOpen(0)}>
-          {isDrawerOpens[0] ? (
-            <MenuFoldOutlined width={"10px"} />
-          ) : (
-            <MenuUnfoldOutlined width={10} />
-          )}
-        </div>
+        <span className="title">
+          <span style={{ display: isDrawerOpens[0] ? "inline-block" : "none" }}>
+            <img src={lemonIcon} alt="" />
+            筛选条件
+          </span>
+          <span className="drawer_icon" onClick={() => onClickonDrawerOpen(0)}>
+            {isDrawerOpens[0] ? (
+              <MenuFoldOutlined width={"10px"} />
+            ) : (
+              <MenuUnfoldOutlined width={10} />
+            )}
+          </span>
+        </span>
         <div
           className="cards"
           style={{
@@ -421,12 +504,24 @@ const Page = () => {
               </Tag.CheckableTag>
             ))}
           </Card>
-          <Card title="客户" style={{ margin: "12px 0" }}>
+          <Card title="客户">
             {customnersData.map((item) => (
               <Tag.CheckableTag
                 key={item}
                 checked={selectedCustTags.includes(item)}
                 onChange={(checked) => handleChange(item, checked, "cust")}
+                color="red"
+              >
+                {item}
+              </Tag.CheckableTag>
+            ))}
+          </Card>
+          <Card title="项目状态">
+            {statusData.map((item) => (
+              <Tag.CheckableTag
+                key={item}
+                checked={selectedStatusTags.includes(item)}
+                onChange={(checked) => handleChange(item, checked, "status")}
                 color="red"
               >
                 {item}
@@ -445,6 +540,30 @@ const Page = () => {
               </Tag.CheckableTag>
             ))}
           </Card>
+          <Card title="是否独家签约">
+            {onlyOneData.map((item) => (
+              <Tag.CheckableTag
+                key={item}
+                checked={selectedOnlyOneTags.includes(item)}
+                onChange={(checked) => handleChange(item, checked, "onlyOne")}
+                color="red"
+              >
+                {item}
+              </Tag.CheckableTag>
+            ))}
+          </Card>
+          <Card title="签约到期时间">
+            {endDateData.map((item) => (
+              <Tag.CheckableTag
+                key={item}
+                checked={selectedEndDateTags.includes(item)}
+                onChange={(checked) => handleChange(item, checked, "endDate")}
+                color="red"
+              >
+                {item}
+              </Tag.CheckableTag>
+            ))}
+          </Card>
         </div>
       </div>
       <div id="allmap" className="map"></div>
@@ -457,11 +576,9 @@ const Page = () => {
               <img src={lemonIcon} alt="" />
               公司合作情况
             </span>
-
             <span
               className="drawer_icon"
               onClick={() => onClickonDrawerOpen(1)}
-              style={{ float: "right" }}
             >
               {isDrawerOpens[1] ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             </span>
