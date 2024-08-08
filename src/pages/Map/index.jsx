@@ -231,11 +231,12 @@ const Page = () => {
         messageDom.style.left = e.pixel.x + 6 + "px";
         // 剩余的高度
         const restHeight = window.innerHeight - e.pixel.y;
-        // 剩余的高度 > messageDom高度（256px） 就向上移动
-        if (restHeight > 256) {
+        const messageDomHeigh = 364
+        // 剩余的高度 > messageDom高度 就向上移动
+        if (restHeight > messageDomHeigh) {
           messageDom.style.top = e.pixel.y + "px";
         } else {
-          messageDom.style.top = e.pixel.y + restHeight - 256 + "px";
+          messageDom.style.top = e.pixel.y + restHeight - messageDomHeigh + "px";
         }
 
         // 获取数据
@@ -265,6 +266,9 @@ const Page = () => {
                     {data?.fields?.["到期时间"] &&
                       new Date(data?.fields?.["到期时间"]).toLocaleDateString()}
                   </p>
+                  <p>发行范围：{data?.fields?.["发行范围"]?.toString()}</p>
+                  <p>是否独家签约：{data?.fields?.["是否独家签约"]}</p>
+                  <p>美元单集价格：${data?.fields?.["美元单集价格"]?.toLocaleString()}</p>
                 </div>
               ),
             }))}
