@@ -10,6 +10,7 @@
     "@testing-library/user-event": "^13.5.0",
     "antd": "^5.19.3",
     "fs": "^0.0.1-security",
+    "less": "^4.2.0",
     "react": "^18.3.1",
     "react-bmapgl": "^0.2.27",
     "react-dom": "^18.3.1",

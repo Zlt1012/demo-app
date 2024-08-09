@@ -28,10 +28,17 @@ const ENUM_COLOR = [
   "gold",
 ];
 
+// 是不是手机
+const isMobileDevice =
+  /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  );
+
 const Page = () => {
   const mapRef = useRef(null);
   const scatterPlotRef = useRef(null);
   const fillLayerRef = useRef(null);
+
   const [dataSource, setDataSource] = useState(tableData);
   const [chartData, setChartData] = useState(chartData2);
   const [isDrawerOpens, setIsDrawerOpens] = useState([false, false]);
@@ -224,19 +231,20 @@ const Page = () => {
       },
     });
     const messageDom = document.getElementById("message");
-    fillLayerRef.current.addEventListener("mousemove", function (e) {
+    fillLayerRef.current.addEventListener( isMobileDevice ? "click" : "mousemove", function (e) {
       const name = e?.value?.dataItem?.properties?.name;
       if (name) {
         messageDom.style.display = "block";
         messageDom.style.left = e.pixel.x + 6 + "px";
         // 剩余的高度
         const restHeight = window.innerHeight - e.pixel.y;
-        const messageDomHeigh = 364
+        const messageDomHeigh = 364;
         // 剩余的高度 > messageDom高度 就向上移动
         if (restHeight > messageDomHeigh) {
           messageDom.style.top = e.pixel.y + "px";
         } else {
-          messageDom.style.top = e.pixel.y + restHeight - messageDomHeigh + "px";
+          messageDom.style.top =
+            e.pixel.y + restHeight - messageDomHeigh + "px";
         }
 
         // 获取数据
@@ -268,7 +276,10 @@ const Page = () => {
                   </p>
                   <p>发行范围：{data?.fields?.["发行范围"]?.toString()}</p>
                   <p>是否独家签约：{data?.fields?.["是否独家签约"]}</p>
-                  <p>美元单集价格：${data?.fields?.["美元单集价格"]?.toLocaleString()}</p>
+                  <p>
+                    美元单集价格：$
+                    {data?.fields?.["美元单集价格"]?.toLocaleString()}
+                  </p>
                 </div>
               ),
             }))}
@@ -468,7 +479,14 @@ const Page = () => {
       <div id="message" className="message">
         <span>{mousemSelectedData}</span>
       </div>
-      <div className="area title">
+      <div className="area title" style={ isMobileDevice ? {
+        top: '12px',
+        fontSize: '15px',
+        left: '50%', 
+        transform: 'translateX(-50%)',
+        width: 'auto',
+        padding: '8px 16px'
+      } : {}}>
         <img src={lemonIcon} alt="" />
         柠萌海外发行情况
       </div>
