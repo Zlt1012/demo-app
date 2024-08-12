@@ -68,7 +68,11 @@ const Page = () => {
     const area =
       currentFeishuData?.map?.((v) => v?.fields?.["授权区域"])?.flat() || [];
     console.log(area);
-    renderMap(area);
+    const areaSet = new Set();
+    area.forEach((item) => {
+      areaSet.add(item);
+    });
+    renderMap([...areaSet]);
   }, [currentFeishuData]);
 
   const init = async () => {
@@ -231,68 +235,105 @@ const Page = () => {
       },
     });
     const messageDom = document.getElementById("message");
-    fillLayerRef.current.addEventListener( isMobileDevice ? "click" : "mousemove", function (e) {
-      const name = e?.value?.dataItem?.properties?.name;
-      if (name) {
-        messageDom.style.display = "block";
-        messageDom.style.left = e.pixel.x + 6 + "px";
-        // 剩余的高度
-        const restHeight = window.innerHeight - e.pixel.y;
-        const messageDomHeigh = 364;
-        // 剩余的高度 > messageDom高度 就向上移动
-        if (restHeight > messageDomHeigh) {
-          messageDom.style.top = e.pixel.y + "px";
+    fillLayerRef.current.addEventListener(
+      // isMobileDevice ? "click" : "mousemove",
+      "click",
+      (e) => {
+        const name = e?.value?.dataItem?.properties?.name;
+        if (name) {
+          // messageDom.style.display = "block";
+          // messageDom.style.left = e.pixel.x + 6 + "px";
+
+          messageDom.style.left = '';
+          messageDom.style.top = '';
+
+          messageDom.style.display = "block";
+          messageDom.style.height = "245px";
+          messageDom.style.width = "400px";
+          messageDom.style.overflowY = "auto";
+          messageDom.style.bottom = "0px";
+          messageDom.style.right = "0px";
+          messageDom.style.cursor = "move";
+
+          // 拖动  ----------------------------
+          messageDom.onmousedown = (event) => {
+            event.preventDefault();
+            let shiftX =
+              event.clientX - messageDom.getBoundingClientRect().left;
+            let shiftY = event.clientY - messageDom.getBoundingClientRect().top;
+            const moveAt = (pageX, pageY) => {
+              messageDom.style.left = pageX - shiftX + "px";
+              messageDom.style.top = pageY - shiftY + "px";
+            };
+            const onMouseMove = (event) => {
+              moveAt(event.pageX, event.pageY);
+            };
+            document.addEventListener("mousemove", onMouseMove);
+
+            document.onmouseup = () => {
+              document.removeEventListener("mousemove", onMouseMove);
+              document.onmouseup = null;
+            };
+          };
+          messageDom.ondragstart = () => false;
+          // -------------------------------- end
+
+          // // 剩余的高度
+          // const restHeight = window.innerHeight - e.pixel.y;
+          // const messageDomHeigh = 364;
+          // // 剩余的高度 > messageDom高度 就向上移动
+          // if (restHeight > messageDomHeigh) {
+          //   messageDom.style.top = e.pixel.y + "px";
+          // } else {
+          //   messageDom.style.top =
+          //     e.pixel.y + restHeight - messageDomHeigh + "px";
+          // }
+
+          // 获取数据
+          const list = currentFeishuData.filter((v) =>
+            v?.fields?.["授权区域"]?.includes(name)
+          );
+          setMousemSelectedData(
+            <Tabs
+              defaultActiveKey="1"
+              items={list.map((data, i) => ({
+                key: i,
+                label: data?.fields?.["签约项目"],
+                children: (
+                  <div className="mouse_message">
+                    <p>客户名称：{data?.fields?.["对方签约公司"]}</p>
+                    <p>
+                      签约日期：
+                      {data?.fields?.["合同签约时间"] &&
+                        new Date(
+                          data?.fields?.["合同签约时间"]
+                        ).toLocaleDateString()}
+                      &nbsp;&nbsp; 到期日期：
+                      {data?.fields?.["到期时间"] &&
+                        new Date(
+                          data?.fields?.["到期时间"]
+                        ).toLocaleDateString()}
+                    </p>
+                    <p>发行范围：{data?.fields?.["发行范围"]?.toString()}</p>
+                    <p>
+                      {data?.fields?.["是否独家签约"]}
+                      &nbsp;&nbsp; 单集价格：$
+                      {data?.fields?.["美元单集价格"]?.toLocaleString()}
+                    </p>
+                  </div>
+                ),
+              }))}
+            />
+          );
+
+          // this.updateState(e.value.dataIndex, { picked: true }, true);
         } else {
-          messageDom.style.top =
-            e.pixel.y + restHeight - messageDomHeigh + "px";
-        }
-
-        // 获取数据
-        const list = currentFeishuData.filter((v) =>
-          v?.fields?.["授权区域"]?.includes(name)
-        );
-        setMousemSelectedData(
-          <Tabs
-            defaultActiveKey="1"
-            items={list.map((data, i) => ({
-              key: i,
-              label: data?.fields?.["签约项目"],
-              children: (
-                <div className="mouse_message">
-                  <p>项目名称：{data?.fields?.["签约项目"]}</p>
-                  <p>客户名称：{data?.fields?.["对方签约公司"]}</p>
-                  <p>金额：${data?.fields?.["美元总价"]?.toLocaleString()}</p>
-                  <p>
-                    签约日期：
-                    {data?.fields?.["合同签约时间"] &&
-                      new Date(
-                        data?.fields?.["合同签约时间"]
-                      ).toLocaleDateString()}
-                  </p>
-                  <p>
-                    到期日期：
-                    {data?.fields?.["到期时间"] &&
-                      new Date(data?.fields?.["到期时间"]).toLocaleDateString()}
-                  </p>
-                  <p>发行范围：{data?.fields?.["发行范围"]?.toString()}</p>
-                  <p>是否独家签约：{data?.fields?.["是否独家签约"]}</p>
-                  <p>
-                    美元单集价格：$
-                    {data?.fields?.["美元单集价格"]?.toLocaleString()}
-                  </p>
-                </div>
-              ),
-            }))}
-          />
-        );
-
-        // this.updateState(e.value.dataIndex, { picked: true }, true);
-      } else {
-        if (messageDom?.style?.display) {
-          messageDom.style.display = "none";
+          if (messageDom?.style?.display) {
+            messageDom.style.display = "none";
+          }
         }
       }
-    });
+    );
 
     mapRef.current.addNormalLayer(fillLayerRef.current);
     const _featureData = JSON.parse(JSON.stringify(featureData));
@@ -479,14 +520,21 @@ const Page = () => {
       <div id="message" className="message">
         <span>{mousemSelectedData}</span>
       </div>
-      <div className="area title" style={ isMobileDevice ? {
-        top: '12px',
-        fontSize: '15px',
-        left: '50%', 
-        transform: 'translateX(-50%)',
-        width: 'auto',
-        padding: '8px 16px'
-      } : {}}>
+      <div
+        className="area title"
+        style={
+          isMobileDevice
+            ? {
+                top: "12px",
+                fontSize: "15px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: "auto",
+                padding: "8px 16px",
+              }
+            : {}
+        }
+      >
         <img src={lemonIcon} alt="" />
         柠萌海外发行情况
       </div>
