@@ -16,15 +16,12 @@ const ENUM_COLOR = [
   "purple",
   "cyan",
   "yellow",
-  "lightblue",
   "darkblue",
   "fuchsia",
   "hotpink",
   "darkgreen",
   "lightgreen",
-  "lightyellow",
   "navy",
-  "lavender",
   "gold",
 ];
 
@@ -200,7 +197,7 @@ const Page = () => {
   const getFillColor = (markedArea) => {
     return markedArea
       .filter((v) => !!v)
-      .map((value, index) => [value, ENUM_COLOR[index % markedArea.length]])
+      .map((value, index) => [value, ENUM_COLOR[index % ENUM_COLOR.length]])
       .flat();
   };
 
@@ -244,16 +241,20 @@ const Page = () => {
           // messageDom.style.display = "block";
           // messageDom.style.left = e.pixel.x + 6 + "px";
 
-          messageDom.style.left = '';
-          messageDom.style.top = '';
+          messageDom.style.left = "";
+          messageDom.style.top = "";
 
           messageDom.style.display = "block";
           messageDom.style.height = "245px";
-          messageDom.style.width = "400px";
+          messageDom.style.width = "70%";
           messageDom.style.overflowY = "auto";
           messageDom.style.bottom = "0px";
           messageDom.style.right = "0px";
-          messageDom.style.cursor = "move";
+          // messageDom.style.cursor = "move";
+
+          // messageDom.style.whiteSpace = "nowrap";
+          // messageDom.style.overflow = "hidden";
+          // messageDom.style.textOverflow = "ellipsis";
 
           // 拖动  ----------------------------
           messageDom.onmousedown = (event) => {
