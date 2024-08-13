@@ -246,7 +246,7 @@ const Page = () => {
 
           messageDom.style.display = "block";
           messageDom.style.height = "245px";
-          messageDom.style.width = "70%";
+          messageDom.style.width = isMobileDevice ? "70%" : '400px';
           messageDom.style.overflowY = "auto";
           messageDom.style.bottom = "0px";
           messageDom.style.right = "0px";
