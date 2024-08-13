@@ -248,8 +248,8 @@ const Page = () => {
           messageDom.style.height = "245px";
           messageDom.style.width = isMobileDevice ? "70%" : '400px';
           messageDom.style.overflowY = "auto";
-          messageDom.style.bottom = "0px";
-          messageDom.style.right = "0px";
+          messageDom.style.bottom = "8px";
+          messageDom.style.right = "8px";
           // messageDom.style.cursor = "move";
 
           // messageDom.style.whiteSpace = "nowrap";
