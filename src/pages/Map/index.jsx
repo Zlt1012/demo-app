@@ -298,7 +298,7 @@ const Page = () => {
             <Tabs
               defaultActiveKey="1"
               items={list.map((data, i) => ({
-                key: i,
+                key: String(i),
                 label: data?.fields?.["签约项目"],
                 children: (
                   <div className="mouse_message">
