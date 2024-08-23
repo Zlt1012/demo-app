@@ -413,6 +413,15 @@ const Page = () => {
     setIsDrawerOpens(_isDrawerOpens);
     console.log(isDrawerOpens);
   };
+  
+  // 控制 地区可发行权利 div的top
+  useEffect(() => {
+    const bottom = document.querySelector(".bottom");
+    const bottom2 = document.querySelector(".bottom2");
+    const Height = bottom.offsetHeight;
+    bottom2.style.top = `${Height + 462 + 6}px`;
+  }, [selectedArea]);
+
 
   return (
     <div className="page">
@@ -538,7 +547,11 @@ const Page = () => {
           className="top"
           style={{
             height: isDrawerOpens[1] ? "428px" : "auto",
-            width: isDrawerOpens[1] ? (isMobileDevice ? "88%" : "410px") : "auto",
+            width: isDrawerOpens[1]
+              ? isMobileDevice
+                ? "88%"
+                : "410px"
+              : "auto",
           }}
         >
           <p className="title">
@@ -568,12 +581,13 @@ const Page = () => {
                 .filter(
                   (v) =>
                     !selectedProjStatusTags.length ||
-                    (selectedProjStatusTags.includes(v?.fields?.["签约项目"]) && v?.fields?.["项目状态"] === '已签约')
+                    (selectedProjStatusTags.includes(v?.fields?.["签约项目"]) &&
+                      v?.fields?.["项目状态"] === "已签约")
                 )
                 .filter(
                   (v) =>
                     !selectedRangeStatusTags.length ||
-                  v?.fields?.["发行范围"].includes(selectedRangeStatusTags[0])
+                    v?.fields?.["发行范围"].includes(selectedRangeStatusTags[0])
                 )
                 .filter((v) => v?.fields?.["授权区域"]?.includes(selectedArea))
                 .map((data, i) => ({
@@ -611,48 +625,54 @@ const Page = () => {
           className="bottom bottomTag"
           style={{
             display: isDrawerOpens[1] ? "block" : "none",
-            width: isDrawerOpens[1] ? (isMobileDevice ? "88%" : "410px") : "none",
+            width: isDrawerOpens[1]
+              ? isMobileDevice
+                ? "88%"
+                : "410px"
+              : "none",
           }}
         >
           <p className="title">
             <img src={lemonIcon} alt="" />
             项目签约情况
           </p>
-          {projectsData.map((item) => {
-            const data = feishuDataRef.current.find(
-              (v) => v.fields["签约项目"] === item
-            )?.fields?.["项目状态"];
-            return (
-              <Tag.CheckableTag
-                key={item}
-                checked={selectedProjStatusTags.includes(item)}
-                onChange={(checked) =>
-                  handleChange(item, checked, "projStatus")
-                }
-                color="red"
-              >
-                <div>
-                  {item}
-                  {data === "已签约" && (
-                    <img src={trustIcon} alt="" width={16} />
-                  )}
-                   {data === "目标" && (
-                    <img src={goal} alt="" width={16} />
-                  )}
-                   {data === "跟进中" && (
-                    <img src={run} alt="" width={16} />
-                  )}
-                </div>
-              </Tag.CheckableTag>
-            );
-          })}
+          {currentFeishuData
+            .filter((v) => v?.fields?.["授权区域"]?.includes(selectedArea))
+            .map((v) => v.fields["签约项目"])
+            .map((item, i) => {
+              const data = feishuDataRef.current.find(
+                (v) => v.fields["签约项目"] === item
+              )?.fields?.["项目状态"];
+              return (
+                <Tag.CheckableTag
+                  key={item + i}
+                  checked={selectedProjStatusTags.includes(item)}
+                  onChange={(checked) =>
+                    handleChange(item, checked, "projStatus")
+                  }
+                  color="red"
+                >
+                  <div>
+                    {item}
+                    {data === "已签约" && (
+                      <img src={trustIcon} alt="" width={16} />
+                    )}
+                    {data === "目标" && <img src={goal} alt="" width={16} />}
+                    {data === "跟进中" && <img src={run} alt="" width={16} />}
+                  </div>
+                </Tag.CheckableTag>
+              );
+            })}
         </div>
-
         <div
           className="bottom2 bottomTag"
           style={{
             display: isDrawerOpens[1] ? "block" : "none",
-            width: isDrawerOpens[1] ? (isMobileDevice ? "88%" : "410px") : "none",
+            width: isDrawerOpens[1]
+              ? isMobileDevice
+                ? "88%"
+                : "410px"
+              : "none",
           }}
         >
           <p className="title">
@@ -660,13 +680,13 @@ const Page = () => {
             该地区可发行权利
           </p>
 
-          {publishData.map((item) => {
+          {publishData.map((item, i) => {
             const data = feishuDataRef.current.find((v) =>
               selectedProjStatusTags.includes(v.fields["签约项目"])
             )?.fields?.["发行范围"];
             return (
               <Tag.CheckableTag
-                key={item}
+                key={item + i}
                 checked={selectedRangeStatusTags.includes(item)}
                 // onChange={(checked) =>
                 //   handleChange(item, checked, "rangeStatus")

@@ -86,7 +86,7 @@
 .page .right .bottom {
   position: absolute;
   background: white;
-  z-index: 10;
+  z-index: 11;
   right: 8px;
   top: 462px;
   padding: 16px;
@@ -95,10 +95,12 @@
 }
 .page .right .bottom2 {
   position: absolute;
+  top: 595px;
+  /* position: relative;
+  top: 16px;  */
   background: white;
   z-index: 10;
   right: 8px;
-  top: 595px;
   padding: 16px;
   padding-top: 0;
   border-radius: 4px;
