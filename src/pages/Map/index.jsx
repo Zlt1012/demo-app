@@ -10,6 +10,7 @@ import { columns } from "./config";
 import { tableData, chartData2 } from "./mockData";
 import "./style.css";
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
+const lodash = require('lodash');
 
 const ENUM_COLOR = [
   "red",
@@ -80,6 +81,11 @@ const Page = () => {
     fetchFeishuAppData();
   };
 
+
+  const removeDuplicates = (data, fieldPath) => {
+    return [...new Map(data.map(item => [lodash.get(item, fieldPath), item])).values()];
+  };
+
   window.addEventListener("scroll", () => {
     // 获取页面当前滚动的距离
     const dynamicDiv = document.querySelector(".map");
@@ -142,16 +148,16 @@ const Page = () => {
 
     // 将响应体解析为 JSON
     const recordsFeishu = await responseRecords.json();
-    console.log(recordsFeishu);
-    feishuDataRef.current = recordsFeishu.data.items;
-
+    const feishuData = removeDuplicates(recordsFeishu.data.items, 'fields.签约项目')
+    feishuDataRef.current = feishuData
+    
     const authorityAreasSet = new Set();
     const projectsSet = new Set();
     const customersSet = new Set();
     const publishSet = new Set();
     const statusSet = new Set();
     const onlyOneSet = new Set();
-    recordsFeishu.data.items.forEach((record) => {
+    feishuData.forEach((record) => {
       const authorityArea = record.fields?.["授权区域"];
       if (authorityArea) {
         authorityArea.forEach((area) => {
@@ -559,7 +565,8 @@ const Page = () => {
               style={{ display: isDrawerOpens[1] ? "inline-block" : "none" }}
             >
               <img src={lemonIcon} alt="" />
-              项目信息
+              项目信息&nbsp;&nbsp;&nbsp;
+              {selectedArea}
             </span>
             <span
               className="drawer_icon"
