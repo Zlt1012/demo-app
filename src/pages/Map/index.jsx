@@ -169,7 +169,7 @@ const Page = () => {
         });
       }
 
-      const publish = record.fields?.["发行范围"];
+      const publish = record.fields?.["发行权利"];
       if (publish) {
         publish.forEach((item) => {
           publishSet.add(item);
@@ -296,7 +296,7 @@ const Page = () => {
     let _selectedStatusTags = type === "status" ? data : selectedStatusTags;
     let _selectedOnlyOneTags = type === "onlyOne" ? data : selectedOnlyOneTags;
     let _selectedEndDateTags = type === "endDate" ? data : selectedEndDateTags;
-    //   签约项目 对方签约公司 [] 发行范围 []
+    //   签约项目 对方签约公司 [] 发行权利 []
     const _currentFeishuData = feishuDataRef.current
       .filter((v) => !!v?.fields?.["签约项目"])
       .map((v) => ({
@@ -304,7 +304,7 @@ const Page = () => {
         fields: {
           ...v.fields,
           对方签约公司: v.fields?.["对方签约公司"] || [],
-          发行范围: v.fields?.["发行范围"] || [],
+          发行权利: v.fields?.["发行权利"] || [],
         },
       }))
       .filter(
@@ -321,10 +321,10 @@ const Page = () => {
               _selectedCustTags.length === 0)) &&
           // 范围// 没选择=全选中，不算查询条件
           (_selectedRangeTags.length === 0 ||
-            v?.fields?.["发行范围"]?.some?.((value) =>
+            v?.fields?.["发行权利"]?.some?.((value) =>
               _selectedRangeTags.includes(value)
             ) ||
-            (v?.fields?.["发行范围"].length === 0 &&
+            (v?.fields?.["发行权利"].length === 0 &&
               _selectedRangeTags.length === 0)) &&
           // 状态
           (_selectedStatusTags.length === 0 ||
@@ -503,7 +503,7 @@ const Page = () => {
               </Tag.CheckableTag>
             ))}
           </Card>
-          <Card title="发行范围">
+          <Card title="发行权利">
             {publishData.map((item) => (
               <Tag.CheckableTag
                 key={item}
@@ -587,7 +587,7 @@ const Page = () => {
                 .filter(
                   (v) =>
                     !selectedRangeStatusTags.length ||
-                    v?.fields?.["发行范围"].includes(selectedRangeStatusTags[0])
+                    v?.fields?.["发行权利"].includes(selectedRangeStatusTags[0])
                 )
                 .filter((v) => v?.fields?.["授权区域"]?.includes(selectedArea))
                 .map((data, i) => ({
@@ -608,7 +608,7 @@ const Page = () => {
                             data?.fields?.["到期时间"]
                           ).toLocaleDateString()}
                       </p>
-                      <p>发行范围：{data?.fields?.["发行范围"]?.toString()}</p>
+                      <p>发行权利：{data?.fields?.["发行权利"]?.toString()}</p>
                       <p>发行平台：{data?.fields?.["发行平台"]?.toString()}</p>
                       <p>
                         {data?.fields?.["是否独家签约"]}
@@ -683,7 +683,7 @@ const Page = () => {
           {publishData.map((item, i) => {
             const data = feishuDataRef.current.find((v) =>
               selectedProjStatusTags.includes(v.fields["签约项目"])
-            )?.fields?.["发行范围"];
+            )?.fields?.["发行权利"];
             return (
               <Tag.CheckableTag
                 key={item + i}
