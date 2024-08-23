@@ -4,6 +4,8 @@ import featureData from "./world.zh.json";
 import dayjs from "dayjs";
 import lemonIcon from "../../assets/icon/icon-lemon.svg";
 import trustIcon from "../../assets/icon/trust.svg";
+import run from "../../assets/icon/run.svg";
+import goal from "../../assets/icon/goal.svg";
 import { columns } from "./config";
 import { tableData, chartData2 } from "./mockData";
 import "./style.css";
@@ -566,7 +568,7 @@ const Page = () => {
                 .filter(
                   (v) =>
                     !selectedProjStatusTags.length ||
-                    selectedProjStatusTags.includes(v?.fields?.["签约项目"])
+                    (selectedProjStatusTags.includes(v?.fields?.["签约项目"]) && v?.fields?.["项目状态"] === '已签约')
                 )
                 .filter(
                   (v) =>
@@ -632,7 +634,13 @@ const Page = () => {
                 <div>
                   {item}
                   {data === "已签约" && (
-                    <img src={trustIcon} alt="" width={24} />
+                    <img src={trustIcon} alt="" width={16} />
+                  )}
+                   {data === "目标" && (
+                    <img src={goal} alt="" width={16} />
+                  )}
+                   {data === "跟进中" && (
+                    <img src={run} alt="" width={16} />
                   )}
                 </div>
               </Tag.CheckableTag>
@@ -660,15 +668,15 @@ const Page = () => {
               <Tag.CheckableTag
                 key={item}
                 checked={selectedRangeStatusTags.includes(item)}
-                onChange={(checked) =>
-                  handleChange(item, checked, "rangeStatus")
-                }
+                // onChange={(checked) =>
+                //   handleChange(item, checked, "rangeStatus")
+                // }
                 color="red"
               >
                 <div>
                   {item}
                   {data?.includes(item) && (
-                    <img src={trustIcon} alt="" width={24} />
+                    <img src={trustIcon} alt="" width={16} />
                   )}
                 </div>
               </Tag.CheckableTag>
