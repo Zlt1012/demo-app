@@ -13,19 +13,12 @@
   width: 100%;
   height: 100vh;
 }
-.page .message {
-  display: none;
-  position: absolute;
-  z-index: 11;
-  background: #fff;
-  padding: 0 12px;
-  border-radius: 8px;
-  opacity: 0.75;
-}
 .page .area {
   position: absolute;
   left: 258px;
   top: 12px;
+  width: 410px;
+
   z-index: 10;
   background: white;
   width: calc(100% - 742px);
@@ -84,17 +77,41 @@
   padding: 16px;
   padding-top: 0;
   border-radius: 4px;
+  width: 410px;
+}
+.page .right .top .message .ant-tabs-content-holder{
+  height: 316px;
+  overflow-y: auto;
 }
 .page .right .bottom {
   position: absolute;
   background: white;
   z-index: 10;
   right: 8px;
-  top: 410px;
+  top: 462px;
   padding: 16px;
   padding-top: 0;
   border-radius: 4px;
-  width: 410px;
+}
+.page .right .bottom2 {
+  position: absolute;
+  background: white;
+  z-index: 10;
+  right: 8px;
+  top: 595px;
+  padding: 16px;
+  padding-top: 0;
+  border-radius: 4px;
+}
+.page .right .bottomTag .ant-tag-checkable-checked {
+  background-color: orange;
+}
+.page .right .bottomTag .ant-tag  {
+  margin-bottom: 4px;
+}
+.page .right .bottomTag .ant-tag > div {
+  display: flex;
+  align-items: center;
 }
 .page .anchorBL {
   display: none;

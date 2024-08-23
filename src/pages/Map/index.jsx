@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Input, Table, Tabs, Tag, Card } from "antd";
 import featureData from "./world.zh.json";
-import { Scatter } from "@antv/g2plot";
 import dayjs from "dayjs";
 import lemonIcon from "../../assets/icon/icon-lemon.svg";
+import trustIcon from "../../assets/icon/trust.svg";
 import { columns } from "./config";
 import { tableData, chartData2 } from "./mockData";
 import "./style.css";
@@ -33,7 +33,6 @@ const isMobileDevice =
 
 const Page = () => {
   const mapRef = useRef(null);
-  const scatterPlotRef = useRef(null);
   const fillLayerRef = useRef(null);
 
   const [dataSource, setDataSource] = useState(tableData);
@@ -45,7 +44,7 @@ const Page = () => {
   const [selectedStatusTags, setSelectedStatusTags] = useState([]);
   const [selectedOnlyOneTags, setSelectedOnlyOneTags] = useState([]);
   const [selectedEndDateTags, setSelectedEndDateTags] = useState([]);
-  const [mousemSelectedData, setMousemSelectedData] = useState("");
+  const [selectedArea, setSelectedArea] = useState("");
   const [markedArea, setMarkedArea] = useState([]);
   const [projectsData, setProjectsData] = useState([]);
   const [customnersData, setCustomnersData] = useState([]);
@@ -53,6 +52,8 @@ const Page = () => {
   const [onlyOneData, setOnlyOneData] = useState([]); // 是否独家签约
   const [endDateData, setEndDateData] = useState(["近半年", "近一年"]); // 签约到期时间
   const [statusData, setStatusData] = useState([]); // 项目状态
+  const [selectedProjStatusTags, setSelectedProjStatusTags] = useState([]);
+  const [selectedRangeStatusTags, setSelectedRangeStatusTags] = useState([]);
 
   const feishuDataRef = useRef([]);
   const [currentFeishuData, setCurrentFeishuData] = useState([]);
@@ -73,10 +74,18 @@ const Page = () => {
   }, [currentFeishuData]);
 
   const init = async () => {
-    renderChart();
     initMap();
     fetchFeishuAppData();
   };
+
+  window.addEventListener("scroll", () => {
+    // 获取页面当前滚动的距离
+    const dynamicDiv = document.querySelector(".map");
+    console.log("dynamicDivdynamicDivdynamicDivdynamicDiv, ", dynamicDiv);
+    const scrollHeight = window.scrollY;
+    // 更新元素的高度，增加的高度为滚动距离
+    dynamicDiv.style.height = `calc(100vh + ${scrollHeight}px)`;
+  });
 
   const fetchFeishuAppData = async () => {
     const responseAccessToken = await fetch(
@@ -236,97 +245,12 @@ const Page = () => {
       // isMobileDevice ? "click" : "mousemove",
       "click",
       (e) => {
+        setSelectedProjStatusTags([]);
         const name = e?.value?.dataItem?.properties?.name;
         if (name) {
-          // messageDom.style.display = "block";
-          // messageDom.style.left = e.pixel.x + 6 + "px";
-
-          messageDom.style.left = "";
-          messageDom.style.top = "";
-
+          setSelectedArea(name);
           messageDom.style.display = "block";
-          messageDom.style.height = "245px";
-          messageDom.style.width = isMobileDevice ? "70%" : '400px';
-          messageDom.style.overflowY = "auto";
-          messageDom.style.bottom = "8px";
-          messageDom.style.right = "8px";
-          // messageDom.style.cursor = "move";
-
-          // messageDom.style.whiteSpace = "nowrap";
-          // messageDom.style.overflow = "hidden";
-          // messageDom.style.textOverflow = "ellipsis";
-
-          // 拖动  ----------------------------
-          messageDom.onmousedown = (event) => {
-            event.preventDefault();
-            let shiftX =
-              event.clientX - messageDom.getBoundingClientRect().left;
-            let shiftY = event.clientY - messageDom.getBoundingClientRect().top;
-            const moveAt = (pageX, pageY) => {
-              messageDom.style.left = pageX - shiftX + "px";
-              messageDom.style.top = pageY - shiftY + "px";
-            };
-            const onMouseMove = (event) => {
-              moveAt(event.pageX, event.pageY);
-            };
-            document.addEventListener("mousemove", onMouseMove);
-
-            document.onmouseup = () => {
-              document.removeEventListener("mousemove", onMouseMove);
-              document.onmouseup = null;
-            };
-          };
-          messageDom.ondragstart = () => false;
-          // -------------------------------- end
-
-          // // 剩余的高度
-          // const restHeight = window.innerHeight - e.pixel.y;
-          // const messageDomHeigh = 364;
-          // // 剩余的高度 > messageDom高度 就向上移动
-          // if (restHeight > messageDomHeigh) {
-          //   messageDom.style.top = e.pixel.y + "px";
-          // } else {
-          //   messageDom.style.top =
-          //     e.pixel.y + restHeight - messageDomHeigh + "px";
-          // }
-
-          // 获取数据
-          const list = currentFeishuData.filter((v) =>
-            v?.fields?.["授权区域"]?.includes(name)
-          );
-          setMousemSelectedData(
-            <Tabs
-              defaultActiveKey="1"
-              items={list.map((data, i) => ({
-                key: String(i),
-                label: data?.fields?.["签约项目"],
-                children: (
-                  <div className="mouse_message">
-                    <p>客户名称：{data?.fields?.["对方签约公司"]}</p>
-                    <p>
-                      签约日期：
-                      {data?.fields?.["合同签约时间"] &&
-                        new Date(
-                          data?.fields?.["合同签约时间"]
-                        ).toLocaleDateString()}
-                      &nbsp;&nbsp; 到期日期：
-                      {data?.fields?.["到期时间"] &&
-                        new Date(
-                          data?.fields?.["到期时间"]
-                        ).toLocaleDateString()}
-                    </p>
-                    <p>发行范围：{data?.fields?.["发行范围"]?.toString()}</p>
-                    <p>
-                      {data?.fields?.["是否独家签约"]}
-                      &nbsp;&nbsp; 单集价格：$
-                      {data?.fields?.["美元单集价格"]?.toLocaleString()}
-                    </p>
-                  </div>
-                ),
-              }))}
-            />
-          );
-
+          setIsDrawerOpens([isDrawerOpens[0], true]);
           // this.updateState(e.value.dataIndex, { picked: true }, true);
         } else {
           if (messageDom?.style?.display) {
@@ -344,58 +268,6 @@ const Page = () => {
     fillLayerRef.current.setData(_featureData);
   };
 
-  const renderChart = () => {
-    if (!scatterPlotRef.current) {
-      scatterPlotRef.current = new Scatter("chartContainer", {
-        // padding: 40,
-        data: chartData,
-        xField: "year",
-        yField: "month",
-        size: 8,
-        shape: "circle",
-        pointStyle: {
-          fill: "orange",
-        },
-        tooltip: false,
-        // tooltip: {
-        //   customContent: (title, data) => {
-        //     return data?.[0]?.data?.name;
-        //   },
-        // },
-        yAxis: {
-          max: 13,
-          label: false,
-        },
-        xAxis: {
-          min: 2019,
-          max: 2025,
-          grid: {
-            line: {
-              style: {
-                stroke: "#eee",
-              },
-            },
-          },
-          line: {
-            style: {
-              stroke: "#aaa",
-            },
-          },
-        },
-        label: {
-          formatter: (data) => {
-            return data?.name;
-          },
-          //    style: {
-          //   fill: 'red',
-          //   opacity: 0.6,
-          //   fontSize: 24
-          // }
-        },
-      });
-      scatterPlotRef.current.render();
-    }
-  };
   // 判断是否半年、一年
   const verifyTime = (selectedData, timestamp) => {
     const date = dayjs(timestamp);
@@ -508,6 +380,30 @@ const Page = () => {
       setSelectedEndDateTags(nextSelectedTags);
       handlefeishuData(nextSelectedTags, "endDate");
     }
+    // 项目签约情况
+    if (type === "projStatus") {
+      // const nextSelectedTags = checked
+      //   ? [...selectedProjStatusTags, tag]
+      //   : selectedProjStatusTags.filter((t) => t !== tag);
+      // setSelectedProjStatusTags(nextSelectedTags);
+      // // handlefeishuData(nextSelectedTags, "proj");
+
+      const nextSelectedTags = checked ? [tag] : [];
+      setSelectedProjStatusTags(nextSelectedTags);
+      // handlefeishuData(nextSelectedTags, "proj");
+    }
+    // 项目签约情况
+    if (type === "rangeStatus") {
+      // const nextSelectedTags = checked
+      //   ? [...selectedProjStatusTags, tag]
+      //   : selectedProjStatusTags.filter((t) => t !== tag);
+      // setSelectedProjStatusTags(nextSelectedTags);
+      // // handlefeishuData(nextSelectedTags, "proj");
+
+      const nextSelectedTags = checked ? [tag] : [];
+      setSelectedRangeStatusTags(nextSelectedTags);
+      // handlefeishuData(nextSelectedTags, "proj");
+    }
   };
   const onClickonDrawerOpen = (index) => {
     const _isDrawerOpens = [...isDrawerOpens];
@@ -518,9 +414,6 @@ const Page = () => {
 
   return (
     <div className="page">
-      <div id="message" className="message">
-        <span>{mousemSelectedData}</span>
-      </div>
       <div
         className="area title"
         style={
@@ -639,13 +532,19 @@ const Page = () => {
       </div>
       <div id="allmap" className="map"></div>
       <div className="right">
-        <div className="top">
+        <div
+          className="top"
+          style={{
+            height: isDrawerOpens[1] ? "428px" : "auto",
+            width: isDrawerOpens[1] ? (isMobileDevice ? "88%" : "410px") : "auto",
+          }}
+        >
           <p className="title">
             <span
               style={{ display: isDrawerOpens[1] ? "inline-block" : "none" }}
             >
               <img src={lemonIcon} alt="" />
-              公司合作情况
+              项目信息
             </span>
             <span
               className="drawer_icon"
@@ -655,31 +554,126 @@ const Page = () => {
             </span>
           </p>
           <div
-            id="chartContainer"
+            id="message"
+            className="message"
             style={{
-              width: "410px",
-              height: "320px",
               display: isDrawerOpens[1] ? "block" : "none",
             }}
-          />
+          >
+            <Tabs
+              defaultActiveKey="1"
+              items={currentFeishuData
+                .filter(
+                  (v) =>
+                    !selectedProjStatusTags.length ||
+                    selectedProjStatusTags.includes(v?.fields?.["签约项目"])
+                )
+                .filter(
+                  (v) =>
+                    !selectedRangeStatusTags.length ||
+                  v?.fields?.["发行范围"].includes(selectedRangeStatusTags[0])
+                )
+                .filter((v) => v?.fields?.["授权区域"]?.includes(selectedArea))
+                .map((data, i) => ({
+                  key: String(i),
+                  label: data?.fields?.["签约项目"],
+                  children: (
+                    <div className="mouse_message">
+                      <p>客户名称：{data?.fields?.["对方签约公司"]}</p>
+                      <p>
+                        签约日期：
+                        {data?.fields?.["合同签约时间"] &&
+                          new Date(
+                            data?.fields?.["合同签约时间"]
+                          ).toLocaleDateString()}
+                        &nbsp;&nbsp; 到期日期：
+                        {data?.fields?.["到期时间"] &&
+                          new Date(
+                            data?.fields?.["到期时间"]
+                          ).toLocaleDateString()}
+                      </p>
+                      <p>发行范围：{data?.fields?.["发行范围"]?.toString()}</p>
+                      <p>发行平台：{data?.fields?.["发行平台"]?.toString()}</p>
+                      <p>
+                        {data?.fields?.["是否独家签约"]}
+                        &nbsp;&nbsp; 单集价格：$
+                        {data?.fields?.["美元单集价格"]?.toLocaleString()}
+                      </p>
+                    </div>
+                  ),
+                }))}
+            />
+          </div>
         </div>
         <div
-          className="bottom"
+          className="bottom bottomTag"
           style={{
             display: isDrawerOpens[1] ? "block" : "none",
+            width: isDrawerOpens[1] ? (isMobileDevice ? "88%" : "410px") : "none",
           }}
         >
           <p className="title">
             <img src={lemonIcon} alt="" />
-            列表数据
+            项目签约情况
           </p>
-          <Table
-            columns={columns}
-            dataSource={dataSource}
-            size="small"
-            rowKey={"name"}
-            pagination={false}
-          />
+          {projectsData.map((item) => {
+            const data = feishuDataRef.current.find(
+              (v) => v.fields["签约项目"] === item
+            )?.fields?.["项目状态"];
+            return (
+              <Tag.CheckableTag
+                key={item}
+                checked={selectedProjStatusTags.includes(item)}
+                onChange={(checked) =>
+                  handleChange(item, checked, "projStatus")
+                }
+                color="red"
+              >
+                <div>
+                  {item}
+                  {data === "已签约" && (
+                    <img src={trustIcon} alt="" width={24} />
+                  )}
+                </div>
+              </Tag.CheckableTag>
+            );
+          })}
+        </div>
+
+        <div
+          className="bottom2 bottomTag"
+          style={{
+            display: isDrawerOpens[1] ? "block" : "none",
+            width: isDrawerOpens[1] ? (isMobileDevice ? "88%" : "410px") : "none",
+          }}
+        >
+          <p className="title">
+            <img src={lemonIcon} alt="" />
+            该地区可发行权利
+          </p>
+
+          {publishData.map((item) => {
+            const data = feishuDataRef.current.find((v) =>
+              selectedProjStatusTags.includes(v.fields["签约项目"])
+            )?.fields?.["发行范围"];
+            return (
+              <Tag.CheckableTag
+                key={item}
+                checked={selectedRangeStatusTags.includes(item)}
+                onChange={(checked) =>
+                  handleChange(item, checked, "rangeStatus")
+                }
+                color="red"
+              >
+                <div>
+                  {item}
+                  {data?.includes(item) && (
+                    <img src={trustIcon} alt="" width={24} />
+                  )}
+                </div>
+              </Tag.CheckableTag>
+            );
+          })}
         </div>
       </div>
     </div>
