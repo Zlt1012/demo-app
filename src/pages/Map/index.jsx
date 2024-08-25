@@ -618,7 +618,8 @@ const Page = () => {
                       <p>发行权利：{data?.fields?.["发行权利"]?.toString()}</p>
                       <p>发行平台：{data?.fields?.["发行平台"]?.toString()}</p>
                       <p>
-                        {data?.fields?.["是否独家签约"]}
+                        {data?.fields?.["项目状态"]}
+                        &nbsp;&nbsp; {data?.fields?.["是否独家签约"]}
                         &nbsp;&nbsp; 单集价格：$
                         {data?.fields?.["美元单集价格"]?.toLocaleString()}
                       </p>
