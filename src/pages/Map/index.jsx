@@ -748,9 +748,9 @@ const Page = () => {
                       )}
                       {__feiDuJia?.includes(item) && (
                         <img
-                          src={fei_du_jia}
+                          src={trustIcon}
                           alt=""
-                          width={14}
+                          width={16}
                           style={{ marginLeft: "2px" }}
                         />
                       )}
