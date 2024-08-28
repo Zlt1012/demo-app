@@ -6,11 +6,12 @@ import lemonIcon from "../../assets/icon/icon-lemon.svg";
 import trustIcon from "../../assets/icon/trust.svg";
 import run from "../../assets/icon/run.svg";
 import goal from "../../assets/icon/goal.svg";
+import du_jia from "../../assets/icon/du_jia.svg";
+import fei_du_jia from "../../assets/icon/fei_du_jia.svg";
 import { columns } from "./config";
 import { tableData, chartData2 } from "./mockData";
 import "./style.css";
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
-const lodash = require('lodash');
 
 const ENUM_COLOR = [
   "red",
@@ -81,18 +82,14 @@ const Page = () => {
     fetchFeishuAppData();
   };
 
-
-  const removeDuplicates = (data, fieldPath) => {
-    return [...new Map(data.map(item => [lodash.get(item, fieldPath), item])).values()];
-  };
-
   window.addEventListener("scroll", () => {
     // 获取页面当前滚动的距离
     const dynamicDiv = document.querySelector(".map");
     console.log("dynamicDivdynamicDivdynamicDivdynamicDiv, ", dynamicDiv);
     const scrollHeight = window.scrollY;
     // 更新元素的高度，增加的高度为滚动距离
-    dynamicDiv.style.height = `calc(100vh + ${scrollHeight}px)`;
+    dynamicDiv?.style?.height &&
+      (dynamicDiv.style.height = `calc(100vh + ${scrollHeight}px)`);
   });
 
   const fetchFeishuAppData = async () => {
@@ -148,16 +145,16 @@ const Page = () => {
 
     // 将响应体解析为 JSON
     const recordsFeishu = await responseRecords.json();
-    const feishuData = removeDuplicates(recordsFeishu.data.items, 'fields.签约项目')
-    feishuDataRef.current = feishuData
-    
+    console.log(recordsFeishu);
+    feishuDataRef.current = recordsFeishu.data.items;
+
     const authorityAreasSet = new Set();
     const projectsSet = new Set();
     const customersSet = new Set();
     const publishSet = new Set();
     const statusSet = new Set();
     const onlyOneSet = new Set();
-    feishuData.forEach((record) => {
+    recordsFeishu.data.items.forEach((record) => {
       const authorityArea = record.fields?.["授权区域"];
       if (authorityArea) {
         authorityArea.forEach((area) => {
@@ -249,6 +246,8 @@ const Page = () => {
       },
     });
     const messageDom = document.getElementById("message");
+    const issueRightDom = document.getElementById("issueRight");
+    const projSigStaDom = document.getElementById("projectSigningStatus");
     fillLayerRef.current.addEventListener(
       // isMobileDevice ? "click" : "mousemove",
       "click",
@@ -258,11 +257,15 @@ const Page = () => {
         if (name) {
           setSelectedArea(name);
           messageDom.style.display = "block";
+          issueRightDom.style.display = "block";
+          projSigStaDom.style.display = "block";
           setIsDrawerOpens([isDrawerOpens[0], true]);
           // this.updateState(e.value.dataIndex, { picked: true }, true);
         } else {
           if (messageDom?.style?.display) {
             messageDom.style.display = "none";
+            issueRightDom.style.display = "none";
+            projSigStaDom.style.display = "none";
           }
         }
       }
@@ -419,15 +422,14 @@ const Page = () => {
     setIsDrawerOpens(_isDrawerOpens);
     console.log(isDrawerOpens);
   };
-  
+
   // 控制 地区可发行权利 div的top
   useEffect(() => {
     const bottom = document.querySelector(".bottom");
     const bottom2 = document.querySelector(".bottom2");
     const Height = bottom.offsetHeight;
     bottom2.style.top = `${Height + 462 + 6}px`;
-  }, [selectedArea]);
-
+  }, [selectedArea, selectedProjStatusTags]);
 
   return (
     <div className="page">
@@ -584,7 +586,7 @@ const Page = () => {
           >
             <Tabs
               defaultActiveKey="1"
-              items={currentFeishuData
+              items={feishuDataRef.current
                 .filter(
                   (v) =>
                     !selectedProjStatusTags.length ||
@@ -644,33 +646,39 @@ const Page = () => {
             <img src={lemonIcon} alt="" />
             项目签约情况
           </p>
-          {currentFeishuData
-            .filter((v) => v?.fields?.["授权区域"]?.includes(selectedArea))
-            .map((v) => v.fields["签约项目"])
-            .map((item, i) => {
-              const data = feishuDataRef.current.find(
-                (v) => v.fields["签约项目"] === item
-              )?.fields?.["项目状态"];
-              return (
-                <Tag.CheckableTag
-                  key={item + i}
-                  checked={selectedProjStatusTags.includes(item)}
-                  onChange={(checked) =>
-                    handleChange(item, checked, "projStatus")
-                  }
-                  color="red"
-                >
-                  <div>
-                    {item}
-                    {data === "已签约" && (
-                      <img src={trustIcon} alt="" width={16} />
-                    )}
-                    {data === "目标" && <img src={goal} alt="" width={16} />}
-                    {data === "跟进中" && <img src={run} alt="" width={16} />}
-                  </div>
-                </Tag.CheckableTag>
-              );
-            })}
+          <div id="projectSigningStatus">
+            {feishuDataRef.current
+              .filter((v) => v?.fields?.["授权区域"]?.includes(selectedArea))
+              .map((v) => v.fields["签约项目"])
+              .reduce(
+                (acc, item) => (acc.includes(item) ? acc : [...acc, item]),
+                []
+              ) // 去重
+              .map((item, i) => {
+                const data = feishuDataRef.current.find(
+                  (v) => v.fields["签约项目"] === item
+                )?.fields?.["项目状态"];
+                return (
+                  <Tag.CheckableTag
+                    key={item + i}
+                    checked={selectedProjStatusTags.includes(item)}
+                    onChange={(checked) =>
+                      handleChange(item, checked, "projStatus")
+                    }
+                    color="red"
+                  >
+                    <div>
+                      {item}
+                      {data === "已签约" && (
+                        <img src={trustIcon} alt="" width={16} />
+                      )}
+                      {data === "目标" && <img src={goal} alt="" width={16} />}
+                      {data === "跟进中" && <img src={run} alt="" width={16} />}
+                    </div>
+                  </Tag.CheckableTag>
+                );
+              })}
+          </div>
         </div>
         <div
           className="bottom2 bottomTag"
@@ -687,29 +695,70 @@ const Page = () => {
             <img src={lemonIcon} alt="" />
             该地区可发行权利
           </p>
+          <div id="issueRight">
+            {selectedProjStatusTags.length > 0 &&
+              publishData.map((item, i) => {
+                const _data = feishuDataRef.current.filter((v) =>
+                  selectedProjStatusTags.includes(v.fields["签约项目"])
+                );
+                console.log(_data);
+                const duJia = [];
+                const feiDuJia = [];
+                _data.forEach((v) => {
+                  if (v?.fields?.["是否独家签约"] === "独家") {
+                    duJia.push(...(v?.fields?.["发行权利"] || []));
+                  } else {
+                    feiDuJia.push(...(v?.fields?.["发行权利"] || []));
+                  }
+                });
+                // 去重
+                const _duJia = duJia.reduce(
+                  (acc, item) => (acc.includes(item) ? acc : [...acc, item]),
+                  []
+                );
+                const _feiDuJia = feiDuJia.reduce(
+                  (acc, item) => (acc.includes(item) ? acc : [...acc, item]),
+                  []
+                );
+                console.log(_duJia);
+                console.log(_feiDuJia);
+                // 去除独家里又有非独家的情况
+                const __feiDuJia = _feiDuJia.filter((v) => !_duJia.includes(v));
+                console.log(__feiDuJia);
 
-          {publishData.map((item, i) => {
-            const data = feishuDataRef.current.find((v) =>
-              selectedProjStatusTags.includes(v.fields["签约项目"])
-            )?.fields?.["发行权利"];
-            return (
-              <Tag.CheckableTag
-                key={item + i}
-                checked={selectedRangeStatusTags.includes(item)}
-                // onChange={(checked) =>
-                //   handleChange(item, checked, "rangeStatus")
-                // }
-                color="red"
-              >
-                <div>
-                  {item}
-                  {data?.includes(item) && (
-                    <img src={trustIcon} alt="" width={16} />
-                  )}
-                </div>
-              </Tag.CheckableTag>
-            );
-          })}
+                // const data = _data?.[0]?.fields?.["发行权利"];
+                return (
+                  <Tag.CheckableTag
+                    key={item + i}
+                    checked={selectedRangeStatusTags.includes(item)}
+                    // onChange={(checked) =>
+                    //   handleChange(item, checked, "rangeStatus")
+                    // }
+                    color="red"
+                  >
+                    <div>
+                      {item}
+                      {_duJia?.includes(item) && (
+                        <img
+                          src={du_jia}
+                          alt=""
+                          width={18}
+                          style={{ marginLeft: "2px" }}
+                        />
+                      )}
+                      {__feiDuJia?.includes(item) && (
+                        <img
+                          src={fei_du_jia}
+                          alt=""
+                          width={14}
+                          style={{ marginLeft: "2px" }}
+                        />
+                      )}
+                    </div>
+                  </Tag.CheckableTag>
+                );
+              })}
+          </div>
         </div>
       </div>
     </div>
