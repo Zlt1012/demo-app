@@ -7,7 +7,7 @@ import trustIcon from "../../assets/icon/trust.svg";
 import run from "../../assets/icon/run.svg";
 import goal from "../../assets/icon/goal.svg";
 import du_jia from "../../assets/icon/du_jia.svg";
-import fei_du_jia from "../../assets/icon/fei_du_jia.svg";
+import unknow from "../../assets/icon/unknow.svg";
 import { columns } from "./config";
 import { tableData, chartData2 } from "./mockData";
 import "./style.css";
@@ -146,7 +146,7 @@ const Page = () => {
     // 将响应体解析为 JSON
     const recordsFeishu = await responseRecords.json();
     console.log(recordsFeishu);
-    feishuDataRef.current = recordsFeishu.data.items;
+    feishuDataRef.current = recordsFeishu.data.items
 
     const authorityAreasSet = new Set();
     const projectsSet = new Set();
@@ -590,8 +590,9 @@ const Page = () => {
                 .filter(
                   (v) =>
                     !selectedProjStatusTags.length ||
-                    (selectedProjStatusTags.includes(v?.fields?.["签约项目"]) &&
-                      v?.fields?.["项目状态"] === "已签约")
+                    (selectedProjStatusTags.includes(v?.fields?.["签约项目"])
+                    //  &&                      v?.fields?.["项目状态"] === "已签约"
+                    )
                 )
                 .filter(
                   (v) =>
@@ -669,11 +670,14 @@ const Page = () => {
                   >
                     <div>
                       {item}
-                      {data === "已签约" && (
+                      {data === "已签约" ? (
                         <img src={trustIcon} alt="" width={16} />
-                      )}
-                      {data === "目标" && <img src={goal} alt="" width={16} />}
-                      {data === "跟进中" && <img src={run} alt="" width={16} />}
+                      ):
+                      (data === "目标" ? <img src={goal} alt="" width={16} /> : (
+                        data === "跟进中" ? <img src={run} alt="" width={16} /> : 
+                        <img src={unknow} alt="" width={14} />
+                      ))
+                    }
                     </div>
                   </Tag.CheckableTag>
                 );
