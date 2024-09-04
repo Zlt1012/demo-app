@@ -60,6 +60,7 @@ const Page = () => {
   const [selectedRangeStatusTags, setSelectedRangeStatusTags] = useState([]);
   const [duJia, setDuJia] = useState([]);
   const [feiDuJia, setFeiDuJia] = useState([]);
+  const [issuanceRights, setIssuanceRights] = useState([]);
 
   const feishuDataRef = useRef([]);
   const [currentFeishuData, setCurrentFeishuData] = useState([]);
@@ -254,8 +255,8 @@ const Page = () => {
       (e) => {
         setSelectedProjStatusTags([]);
         const name = e?.value?.dataItem?.properties?.name;
-          setSelectedArea(name);
-          if (name) {
+        setSelectedArea(name);
+        if (name) {
           messageDom.style.display = "block";
           issueRightDom.style.display = "block";
           projSigStaDom.style.display = "block";
@@ -347,6 +348,10 @@ const Page = () => {
       );
     setCurrentFeishuData(_currentFeishuData);
   };
+
+  const handleIssuanceRightsChange = (tag, checked) => {
+    setIssuanceRights(checked ? [tag] : []);
+  };
   const handleChange = (tag, checked, type) => {
     if (type === "proj") {
       const nextSelectedTags = checked
@@ -428,7 +433,7 @@ const Page = () => {
     const bottom2 = document.querySelector(".bottom2");
     const Height = bottom.offsetHeight;
     bottom2.style.top = `${Height + 12 + 6}px`;
-  }, [selectedArea, selectedProjStatusTags,isDrawerOpens]);
+  }, [selectedArea, selectedProjStatusTags, isDrawerOpens]);
 
   // 控制 项目信息 div的top
   useEffect(() => {
@@ -438,7 +443,7 @@ const Page = () => {
     const Height = bottom.offsetHeight;
     const Height2 = bottom2.offsetHeight;
     top.style.top = `${Height + Height2 + 12 + 6 + 6}px`;
-  }, [selectedArea, selectedProjStatusTags, isDrawerOpens]);
+  }, [selectedArea, selectedProjStatusTags, isDrawerOpens, issuanceRights]);
 
   // 计算是否独家
   const calDuJia = () => {
@@ -494,7 +499,7 @@ const Page = () => {
 
       return 0;
     });
-    return _data;
+    return _data.reverse();
   };
   return (
     <div className="page">
@@ -629,50 +634,64 @@ const Page = () => {
           }}
         >
           <p className="title">
-            <img src={lemonIcon} alt=""    style={{
-                    display: isDrawerOpens[1] ? "inline-block" : "none",
-                  }} />
+            <img
+              src={lemonIcon}
+              alt=""
+              style={{
+                display: isDrawerOpens[1] ? "inline-block" : "none",
+              }}
+            />
             <span
-            style={{
-              display: isDrawerOpens[1] ? "inline-block" : "none",
-            }}
-            >项目签约情况</span>
+              style={{
+                display: isDrawerOpens[1] ? "inline-block" : "none",
+              }}
+            >
+              项目签约情况
+            </span>
             <span
-                    style={{
-                      display: isDrawerOpens[1] ? "inline-block" : "none",
-                    }}
+              style={{
+                display: isDrawerOpens[1] ? "inline-block" : "none",
+              }}
             >
- 
-            <Tag.CheckableTag
-              key={"trust"}
-              // checked={selectedProjStatusTags.includes(item)}
-              // onChange={(checked) =>
-              //   handleChange(item, checked, "projStatus")
-              // }
-            >
-              <img src={trustIcon} alt="" width={16} />
-              已签约
-            </Tag.CheckableTag>
-            <Tag.CheckableTag
-              key={"run"}
-              // checked={selectedProjStatusTags.includes(item)}
-              // onChange={(checked) =>
-              //   handleChange(item, checked, "projStatus")
-              // }
-            >
-              <img src={run} alt="" width={16} /> 跟进中
-            </Tag.CheckableTag>
-            <Tag.CheckableTag
-              key={"unknow"}
-              // checked={selectedProjStatusTags.includes(item)}
-              // onChange={(checked) =>
-              //   handleChange(item, checked, "projStatus")
-              // }
-            >
-              <img src={unknow} alt="" width={14} />
-              过期
-            </Tag.CheckableTag>
-                         
+              <Tag.CheckableTag
+                key={"trust"}
+                // checked={selectedProjStatusTags.includes(item)}
+                // onChange={(checked) =>
+                //   handleChange(item, checked, "projStatus")
+                // }
+              >
+                <img src={trustIcon} alt="" width={16} />
+                已签约
+              </Tag.CheckableTag>
+              <Tag.CheckableTag
+                key={"trust"}
+                // checked={selectedProjStatusTags.includes(item)}
+                // onChange={(checked) =>
+                //   handleChange(item, checked, "projStatus")
+                // }
+              >
+                <img src={goal} alt="" width={16} />
+                目标
+              </Tag.CheckableTag>
+              <Tag.CheckableTag
+                key={"run"}
+                // checked={selectedProjStatusTags.includes(item)}
+                // onChange={(checked) =>
+                //   handleChange(item, checked, "projStatus")
+                // }
+              >
+                <img src={run} alt="" width={16} /> 跟进中
+              </Tag.CheckableTag>
+              <Tag.CheckableTag
+                key={"unknow"}
+                // checked={selectedProjStatusTags.includes(item)}
+                // onChange={(checked) =>
+                //   handleChange(item, checked, "projStatus")
+                // }
+              >
+                <img src={unknow} alt="" width={14} />
+                过期
+              </Tag.CheckableTag>
             </span>
             <span
               className="drawer_icon"
@@ -681,10 +700,11 @@ const Page = () => {
               {isDrawerOpens[1] ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             </span>
           </p>
-          <div id="projectSigningStatus"
-                  style={{
-                    display: isDrawerOpens[1] ? "block" : "none",
-                  }}
+          <div
+            id="projectSigningStatus"
+            style={{
+              display: isDrawerOpens[1] ? "block" : "none",
+            }}
           >
             {feishuDataRef.current
               .filter((v) => v?.fields?.["授权区域"]?.includes(selectedArea))
@@ -701,9 +721,10 @@ const Page = () => {
                   <Tag.CheckableTag
                     key={item + i}
                     checked={selectedProjStatusTags.includes(item)}
-                    onChange={(checked) =>
-                      handleChange(item, checked, "projStatus")
-                    }
+                    onChange={(checked) => {
+                      handleChange(item, checked, "projStatus");
+                      setIssuanceRights([]);
+                    }}
                     color="red"
                   >
                     <div>
@@ -736,13 +757,16 @@ const Page = () => {
         >
           <p className="title">
             <img src={lemonIcon} alt="" />
-            该地区可发行权利
+            该地区可发行权利&nbsp;&nbsp;
             <Tag.CheckableTag
               key={"exclusive"}
-              // checked={selectedProjStatusTags.includes(item)}
-              // onChange={(checked) =>
-              //   handleChange(item, checked, "projStatus")
-              // }
+              checked={issuanceRights.includes("0")}
+              onChange={(checked) => handleIssuanceRightsChange("0", checked)}
+              style={{
+                backgroundColor: issuanceRights.includes("0")
+                  ? "#389e0d"
+                  : "#b7eb8f",
+              }}
             >
               <img
                 src={du_jia}
@@ -754,20 +778,27 @@ const Page = () => {
             </Tag.CheckableTag>
             <Tag.CheckableTag
               key={"unExclusive"}
-              // checked={selectedProjStatusTags.includes(item)}
-              // onChange={(checked) =>
-              //   handleChange(item, checked, "projStatus")
-              // }
+              checked={issuanceRights.includes("1")}
+              onChange={(checked) => handleIssuanceRightsChange("1", checked)}
+              style={{
+                backgroundColor: issuanceRights.includes("1")
+                  ? "#d48806"
+                  : "#ffe58f",
+              }}
             >
               <img src={trustIcon} alt="" width={16} />
               非独家
             </Tag.CheckableTag>
+            {console.log(11111, issuanceRights)}
             <Tag.CheckableTag
               key={"unCooperation"}
-              // checked={selectedProjStatusTags.includes(item)}
-              // onChange={(checked) =>
-              //   handleChange(item, checked, "projStatus")
-              // }
+              checked={issuanceRights.includes("2")}
+              onChange={(checked) => handleIssuanceRightsChange("2", checked)}
+              style={{
+                backgroundColor: issuanceRights.includes("2")
+                  ? "#cf1322"
+                  : "#ffa39e",
+              }}
             >
               <img src={unknow} alt="" width={14} />
               未合作
@@ -775,50 +806,65 @@ const Page = () => {
           </p>
           <div id="issueRight">
             {selectedProjStatusTags.length > 0 &&
-              orderData(publishData).map((item, i) => {
-                return (
-                  <Tag.CheckableTag
-                    key={item + i}
-                    checked={selectedRangeStatusTags.includes(item)}
-                    // onChange={(checked) =>
-                    //   handleChange(item, checked, "rangeStatus")
-                    // }
-                    style={{
-                      backgroundColor: duJia?.includes(item)
-                        ? "green"
-                        : feiDuJia?.includes(item)
-                        ? "yellow"
-                        : "red",
-                    }}
-                  >
-                    <div>
-                      {item}
-                      {duJia?.includes(item) ? (
-                        <img
-                          src={du_jia}
-                          alt=""
-                          width={18}
-                          style={{ marginLeft: "2px" }}
-                        />
-                      ) : feiDuJia?.includes(item) ? (
-                        <img
-                          src={trustIcon}
-                          alt=""
-                          width={16}
-                          style={{ marginLeft: "2px" }}
-                        />
-                      ) : (
-                        <img
-                          src={unknow}
-                          alt=""
-                          width={14}
-                          style={{ marginLeft: "2px" }}
-                        />
-                      )}
-                    </div>
-                  </Tag.CheckableTag>
-                );
-              })}
+              orderData(publishData)
+                .filter((v) => {
+                  if (issuanceRights.length === 0) {
+                    return true;
+                  }
+                  if (issuanceRights.includes("0")) {
+                    return duJia?.includes(v);
+                  }
+                  if (issuanceRights.includes("1")) {
+                    return feiDuJia?.includes(v);
+                  }
+                  if (issuanceRights.includes("2")) {
+                    return !feiDuJia?.includes(v) && !duJia?.includes(v);
+                  }
+                })
+                .map((item, i) => {
+                  return (
+                    <Tag.CheckableTag
+                      key={item + i}
+                      checked={selectedRangeStatusTags.includes(item)}
+                      // onChange={(checked) =>
+                      //   handleChange(item, checked, "rangeStatus")
+                      // }
+                      style={{
+                        backgroundColor: duJia?.includes(item)
+                          ? "#b7eb8f"
+                          : feiDuJia?.includes(item)
+                          ? "#ffe58f"
+                          : "#ffa39e",
+                      }}
+                    >
+                      <div>
+                        {item}
+                        {duJia?.includes(item) ? (
+                          <img
+                            src={du_jia}
+                            alt=""
+                            width={18}
+                            style={{ marginLeft: "2px" }}
+                          />
+                        ) : feiDuJia?.includes(item) ? (
+                          <img
+                            src={trustIcon}
+                            alt=""
+                            width={16}
+                            style={{ marginLeft: "2px" }}
+                          />
+                        ) : (
+                          <img
+                            src={unknow}
+                            alt=""
+                            width={14}
+                            style={{ marginLeft: "2px" }}
+                          />
+                        )}
+                      </div>
+                    </Tag.CheckableTag>
+                  );
+                })}
           </div>
         </div>
         <div
