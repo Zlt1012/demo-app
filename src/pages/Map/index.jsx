@@ -58,6 +58,8 @@ const Page = () => {
   const [statusData, setStatusData] = useState([]); // 项目状态
   const [selectedProjStatusTags, setSelectedProjStatusTags] = useState([]);
   const [selectedRangeStatusTags, setSelectedRangeStatusTags] = useState([]);
+  const [duJia, setDuJia] = useState([]);
+  const [feiDuJia, setFeiDuJia] = useState([]);
 
   const feishuDataRef = useRef([]);
   const [currentFeishuData, setCurrentFeishuData] = useState([]);
@@ -84,12 +86,10 @@ const Page = () => {
 
   window.addEventListener("scroll", () => {
     // 获取页面当前滚动的距离
-    const dynamicDiv = document.querySelector(".map");
-    console.log("dynamicDivdynamicDivdynamicDivdynamicDiv, ", dynamicDiv);
+    const dynamicDiv = document.querySelector("#allmap");
     const scrollHeight = window.scrollY;
     // 更新元素的高度，增加的高度为滚动距离
-    dynamicDiv?.style?.height &&
-      (dynamicDiv.style.height = `calc(100vh + ${scrollHeight}px)`);
+    dynamicDiv.style.height = `calc(100vh + ${scrollHeight}px)`;
   });
 
   const fetchFeishuAppData = async () => {
@@ -146,7 +146,7 @@ const Page = () => {
     // 将响应体解析为 JSON
     const recordsFeishu = await responseRecords.json();
     console.log(recordsFeishu);
-    feishuDataRef.current = recordsFeishu.data.items
+    feishuDataRef.current = recordsFeishu.data.items;
 
     const authorityAreasSet = new Set();
     const projectsSet = new Set();
@@ -254,8 +254,8 @@ const Page = () => {
       (e) => {
         setSelectedProjStatusTags([]);
         const name = e?.value?.dataItem?.properties?.name;
-        if (name) {
           setSelectedArea(name);
+          if (name) {
           messageDom.style.display = "block";
           issueRightDom.style.display = "block";
           projSigStaDom.style.display = "block";
@@ -420,7 +420,6 @@ const Page = () => {
     const _isDrawerOpens = [...isDrawerOpens];
     _isDrawerOpens[index] = !_isDrawerOpens[index];
     setIsDrawerOpens(_isDrawerOpens);
-    console.log(isDrawerOpens);
   };
 
   // 控制 地区可发行权利 div的top
@@ -428,9 +427,75 @@ const Page = () => {
     const bottom = document.querySelector(".bottom");
     const bottom2 = document.querySelector(".bottom2");
     const Height = bottom.offsetHeight;
-    bottom2.style.top = `${Height + 462 + 6}px`;
-  }, [selectedArea, selectedProjStatusTags]);
+    bottom2.style.top = `${Height + 12 + 6}px`;
+  }, [selectedArea, selectedProjStatusTags,isDrawerOpens]);
 
+  // 控制 项目信息 div的top
+  useEffect(() => {
+    const bottom = document.querySelector(".bottom");
+    const bottom2 = document.querySelector(".bottom2");
+    const top = document.querySelector(".top");
+    const Height = bottom.offsetHeight;
+    const Height2 = bottom2.offsetHeight;
+    top.style.top = `${Height + Height2 + 12 + 6 + 6}px`;
+  }, [selectedArea, selectedProjStatusTags, isDrawerOpens]);
+
+  // 计算是否独家
+  const calDuJia = () => {
+    const _data = feishuDataRef.current.filter((v) =>
+      selectedProjStatusTags.includes(v.fields["签约项目"])
+    );
+    console.log(_data);
+    const duJia = [];
+    const feiDuJia = [];
+    _data.forEach((v) => {
+      if (v?.fields?.["是否独家签约"] === "独家") {
+        duJia.push(...(v?.fields?.["发行权利"] || []));
+      } else {
+        feiDuJia.push(...(v?.fields?.["发行权利"] || []));
+      }
+    });
+    // 去重
+    const _duJia = duJia.reduce(
+      (acc, item) => (acc.includes(item) ? acc : [...acc, item]),
+      []
+    );
+    const _feiDuJia = feiDuJia.reduce(
+      (acc, item) => (acc.includes(item) ? acc : [...acc, item]),
+      []
+    );
+    console.log(_duJia);
+    console.log(_feiDuJia);
+    // 去除独家里又有非独家的情况
+    const __feiDuJia = _feiDuJia.filter((v) => !_duJia.includes(v));
+    console.log(__feiDuJia);
+    setDuJia(_duJia);
+    setFeiDuJia(__feiDuJia);
+    // const data = _data?.[0]?.fields?.["发行权利"];
+  };
+
+  useEffect(() => {
+    calDuJia();
+  }, [selectedProjStatusTags]);
+
+  // 排序
+  const orderData = (data) => {
+    const _data = [...data];
+    _data?.sort((x, y) => {
+      const inA = duJia.includes(x);
+      const inB = feiDuJia.includes(x);
+      const inA_y = duJia.includes(y);
+      const inB_y = feiDuJia.includes(y);
+
+      if (inA && !inA_y) return -1; // x 在 a 里，y 不在 a 里
+      if (!inA && inA_y) return 1; // y 在 a 里，x 不在 a 里
+      if (inB && !inB_y) return -1; // x 在 b 里，y 不在 b 里
+      if (!inB && inB_y) return 1; // y 在 b 里，x 不在 b 里
+
+      return 0;
+    });
+    return _data;
+  };
   return (
     <div className="page">
       <div
@@ -552,9 +617,214 @@ const Page = () => {
       <div id="allmap" className="map"></div>
       <div className="right">
         <div
+          className="bottom bottomTag"
+          style={{
+            // height: isDrawerOpens[1] ? "428px" : "auto",
+            // display: isDrawerOpens[1] ? "block" : "none",
+            width: isDrawerOpens[1]
+              ? isMobileDevice
+                ? "88%"
+                : "410px"
+              : "auto",
+          }}
+        >
+          <p className="title">
+            <img src={lemonIcon} alt=""    style={{
+                    display: isDrawerOpens[1] ? "inline-block" : "none",
+                  }} />
+            <span
+            style={{
+              display: isDrawerOpens[1] ? "inline-block" : "none",
+            }}
+            >项目签约情况</span>
+            <span
+                    style={{
+                      display: isDrawerOpens[1] ? "inline-block" : "none",
+                    }}
+            >
+ 
+            <Tag.CheckableTag
+              key={"trust"}
+              // checked={selectedProjStatusTags.includes(item)}
+              // onChange={(checked) =>
+              //   handleChange(item, checked, "projStatus")
+              // }
+            >
+              <img src={trustIcon} alt="" width={16} />
+              已签约
+            </Tag.CheckableTag>
+            <Tag.CheckableTag
+              key={"run"}
+              // checked={selectedProjStatusTags.includes(item)}
+              // onChange={(checked) =>
+              //   handleChange(item, checked, "projStatus")
+              // }
+            >
+              <img src={run} alt="" width={16} /> 跟进中
+            </Tag.CheckableTag>
+            <Tag.CheckableTag
+              key={"unknow"}
+              // checked={selectedProjStatusTags.includes(item)}
+              // onChange={(checked) =>
+              //   handleChange(item, checked, "projStatus")
+              // }
+            >
+              <img src={unknow} alt="" width={14} />
+              过期
+            </Tag.CheckableTag>
+                         
+            </span>
+            <span
+              className="drawer_icon"
+              onClick={() => onClickonDrawerOpen(1)}
+            >
+              {isDrawerOpens[1] ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            </span>
+          </p>
+          <div id="projectSigningStatus"
+                  style={{
+                    display: isDrawerOpens[1] ? "block" : "none",
+                  }}
+          >
+            {feishuDataRef.current
+              .filter((v) => v?.fields?.["授权区域"]?.includes(selectedArea))
+              .map((v) => v.fields["签约项目"])
+              .reduce(
+                (acc, item) => (acc.includes(item) ? acc : [...acc, item]),
+                []
+              ) // 去重
+              .map((item, i) => {
+                const data = feishuDataRef.current.find(
+                  (v) => v.fields["签约项目"] === item
+                )?.fields?.["项目状态"];
+                return (
+                  <Tag.CheckableTag
+                    key={item + i}
+                    checked={selectedProjStatusTags.includes(item)}
+                    onChange={(checked) =>
+                      handleChange(item, checked, "projStatus")
+                    }
+                    color="red"
+                  >
+                    <div>
+                      {item}
+                      {data === "已签约" ? (
+                        <img src={trustIcon} alt="" width={16} />
+                      ) : data === "目标" ? (
+                        <img src={goal} alt="" width={16} />
+                      ) : data === "跟进中" ? (
+                        <img src={run} alt="" width={16} />
+                      ) : (
+                        <img src={unknow} alt="" width={14} />
+                      )}
+                    </div>
+                  </Tag.CheckableTag>
+                );
+              })}
+          </div>
+        </div>
+        <div
+          className="bottom2 bottomTag"
+          style={{
+            display: isDrawerOpens[1] ? "block" : "none",
+            width: isDrawerOpens[1]
+              ? isMobileDevice
+                ? "88%"
+                : "410px"
+              : "none",
+          }}
+        >
+          <p className="title">
+            <img src={lemonIcon} alt="" />
+            该地区可发行权利
+            <Tag.CheckableTag
+              key={"exclusive"}
+              // checked={selectedProjStatusTags.includes(item)}
+              // onChange={(checked) =>
+              //   handleChange(item, checked, "projStatus")
+              // }
+            >
+              <img
+                src={du_jia}
+                alt=""
+                width={18}
+                style={{ verticalAlign: "top" }}
+              />
+              独家
+            </Tag.CheckableTag>
+            <Tag.CheckableTag
+              key={"unExclusive"}
+              // checked={selectedProjStatusTags.includes(item)}
+              // onChange={(checked) =>
+              //   handleChange(item, checked, "projStatus")
+              // }
+            >
+              <img src={trustIcon} alt="" width={16} />
+              非独家
+            </Tag.CheckableTag>
+            <Tag.CheckableTag
+              key={"unCooperation"}
+              // checked={selectedProjStatusTags.includes(item)}
+              // onChange={(checked) =>
+              //   handleChange(item, checked, "projStatus")
+              // }
+            >
+              <img src={unknow} alt="" width={14} />
+              未合作
+            </Tag.CheckableTag>
+          </p>
+          <div id="issueRight">
+            {selectedProjStatusTags.length > 0 &&
+              orderData(publishData).map((item, i) => {
+                return (
+                  <Tag.CheckableTag
+                    key={item + i}
+                    checked={selectedRangeStatusTags.includes(item)}
+                    // onChange={(checked) =>
+                    //   handleChange(item, checked, "rangeStatus")
+                    // }
+                    style={{
+                      backgroundColor: duJia?.includes(item)
+                        ? "green"
+                        : feiDuJia?.includes(item)
+                        ? "yellow"
+                        : "red",
+                    }}
+                  >
+                    <div>
+                      {item}
+                      {duJia?.includes(item) ? (
+                        <img
+                          src={du_jia}
+                          alt=""
+                          width={18}
+                          style={{ marginLeft: "2px" }}
+                        />
+                      ) : feiDuJia?.includes(item) ? (
+                        <img
+                          src={trustIcon}
+                          alt=""
+                          width={16}
+                          style={{ marginLeft: "2px" }}
+                        />
+                      ) : (
+                        <img
+                          src={unknow}
+                          alt=""
+                          width={14}
+                          style={{ marginLeft: "2px" }}
+                        />
+                      )}
+                    </div>
+                  </Tag.CheckableTag>
+                );
+              })}
+          </div>
+        </div>
+        <div
           className="top"
           style={{
-            height: isDrawerOpens[1] ? "428px" : "auto",
+            display: isDrawerOpens[1] ? "block" : "none",
             width: isDrawerOpens[1]
               ? isMobileDevice
                 ? "88%"
@@ -570,12 +840,6 @@ const Page = () => {
               项目信息&nbsp;&nbsp;&nbsp;
               {selectedArea}
             </span>
-            <span
-              className="drawer_icon"
-              onClick={() => onClickonDrawerOpen(1)}
-            >
-              {isDrawerOpens[1] ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            </span>
           </p>
           <div
             id="message"
@@ -590,9 +854,8 @@ const Page = () => {
                 .filter(
                   (v) =>
                     !selectedProjStatusTags.length ||
-                    (selectedProjStatusTags.includes(v?.fields?.["签约项目"])
-                    //  &&                      v?.fields?.["项目状态"] === "已签约"
-                    )
+                    selectedProjStatusTags.includes(v?.fields?.["签约项目"])
+                  //  &&                      v?.fields?.["项目状态"] === "已签约"
                 )
                 .filter(
                   (v) =>
@@ -630,138 +893,6 @@ const Page = () => {
                   ),
                 }))}
             />
-          </div>
-        </div>
-        <div
-          className="bottom bottomTag"
-          style={{
-            display: isDrawerOpens[1] ? "block" : "none",
-            width: isDrawerOpens[1]
-              ? isMobileDevice
-                ? "88%"
-                : "410px"
-              : "none",
-          }}
-        >
-          <p className="title">
-            <img src={lemonIcon} alt="" />
-            项目签约情况
-          </p>
-          <div id="projectSigningStatus">
-            {feishuDataRef.current
-              .filter((v) => v?.fields?.["授权区域"]?.includes(selectedArea))
-              .map((v) => v.fields["签约项目"])
-              .reduce(
-                (acc, item) => (acc.includes(item) ? acc : [...acc, item]),
-                []
-              ) // 去重
-              .map((item, i) => {
-                const data = feishuDataRef.current.find(
-                  (v) => v.fields["签约项目"] === item
-                )?.fields?.["项目状态"];
-                return (
-                  <Tag.CheckableTag
-                    key={item + i}
-                    checked={selectedProjStatusTags.includes(item)}
-                    onChange={(checked) =>
-                      handleChange(item, checked, "projStatus")
-                    }
-                    color="red"
-                  >
-                    <div>
-                      {item}
-                      {data === "已签约" ? (
-                        <img src={trustIcon} alt="" width={16} />
-                      ):
-                      (data === "目标" ? <img src={goal} alt="" width={16} /> : (
-                        data === "跟进中" ? <img src={run} alt="" width={16} /> : 
-                        <img src={unknow} alt="" width={14} />
-                      ))
-                    }
-                    </div>
-                  </Tag.CheckableTag>
-                );
-              })}
-          </div>
-        </div>
-        <div
-          className="bottom2 bottomTag"
-          style={{
-            display: isDrawerOpens[1] ? "block" : "none",
-            width: isDrawerOpens[1]
-              ? isMobileDevice
-                ? "88%"
-                : "410px"
-              : "none",
-          }}
-        >
-          <p className="title">
-            <img src={lemonIcon} alt="" />
-            该地区可发行权利
-          </p>
-          <div id="issueRight">
-            {selectedProjStatusTags.length > 0 &&
-              publishData.map((item, i) => {
-                const _data = feishuDataRef.current.filter((v) =>
-                  selectedProjStatusTags.includes(v.fields["签约项目"])
-                );
-                console.log(_data);
-                const duJia = [];
-                const feiDuJia = [];
-                _data.forEach((v) => {
-                  if (v?.fields?.["是否独家签约"] === "独家") {
-                    duJia.push(...(v?.fields?.["发行权利"] || []));
-                  } else {
-                    feiDuJia.push(...(v?.fields?.["发行权利"] || []));
-                  }
-                });
-                // 去重
-                const _duJia = duJia.reduce(
-                  (acc, item) => (acc.includes(item) ? acc : [...acc, item]),
-                  []
-                );
-                const _feiDuJia = feiDuJia.reduce(
-                  (acc, item) => (acc.includes(item) ? acc : [...acc, item]),
-                  []
-                );
-                console.log(_duJia);
-                console.log(_feiDuJia);
-                // 去除独家里又有非独家的情况
-                const __feiDuJia = _feiDuJia.filter((v) => !_duJia.includes(v));
-                console.log(__feiDuJia);
-
-                // const data = _data?.[0]?.fields?.["发行权利"];
-                return (
-                  <Tag.CheckableTag
-                    key={item + i}
-                    checked={selectedRangeStatusTags.includes(item)}
-                    // onChange={(checked) =>
-                    //   handleChange(item, checked, "rangeStatus")
-                    // }
-                    color="red"
-                  >
-                    <div>
-                      {item}
-                      {_duJia?.includes(item) && (
-                        <img
-                          src={du_jia}
-                          alt=""
-                          width={18}
-                          style={{ marginLeft: "2px" }}
-                        />
-                      )}
-                      {__feiDuJia?.includes(item) && (
-                        <img
-                          src={trustIcon}
-                          alt=""
-                          width={16}
-                          style={{ marginLeft: "2px" }}
-                        />
-                      )}
-                    </div>
-                  </Tag.CheckableTag>
-                );
-              })}
           </div>
         </div>
       </div>

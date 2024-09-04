@@ -73,22 +73,22 @@
   background: white;
   z-index: 10;
   right: 8px;
-  top: 12px;
+  top: 600px;
   padding: 16px;
   padding-top: 0;
   border-radius: 4px;
   width: 410px;
 }
 .page .right .top .message .ant-tabs-content-holder{
-  height: 316px;
-  overflow-y: auto;
+  /* height: 316px; */
+  /* overflow-y: auto; */
 }
 .page .right .bottom {
   position: absolute;
   background: white;
   z-index: 11;
   right: 8px;
-  top: 462px;
+  top: 12px;
   padding: 16px;
   padding-top: 0;
   border-radius: 4px;
