@@ -30,9 +30,9 @@
   font-size: 16px;
   color: black;
   text-align: left;
-  .ant-tag-checkable-checked {
+  /* .ant-tag-checkable-checked {
     border-color: #888;
-  }
+  } */
 }
 .page .title img {
   vertical-align: text-top;
@@ -95,6 +95,10 @@
   padding: 16px;
   padding-top: 0;
   border-radius: 4px;
+  .proj-status > span{
+    margin-right: 4px !important;
+  }
+  
 }
 .page .right .bottom2 {
   position: absolute;

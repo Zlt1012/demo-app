@@ -8,10 +8,25 @@ import run from "../../assets/icon/run.svg";
 import goal from "../../assets/icon/goal.svg";
 import du_jia from "../../assets/icon/du_jia.svg";
 import unknow from "../../assets/icon/unknow.svg";
-import { columns } from "./config";
+import trustIcon_white from "../../assets/icon/trust_white.svg";
+import run_white from "../../assets/icon/run_white.svg";
+import goal_white from "../../assets/icon/goal_white.svg";
+import du_jia_white from "../../assets/icon/du_jia_white.svg";
+import unknow_white from "../../assets/icon/unknow_white.svg";
 import { tableData, chartData2 } from "./mockData";
 import "./style.css";
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
+
+const COLOR = {
+  red: "#ffccc7",
+  red_selected: "#cf1322",
+  green: "#d9f7be",
+  green_selected: "#389e0d",
+  yellow: "#fff1b8",
+  yellow_selected: "#d48806",
+  blue: "#bae0ff",
+  blue_selected: "#0958d9",
+};
 
 const ENUM_COLOR = [
   "red",
@@ -61,6 +76,9 @@ const Page = () => {
   const [duJia, setDuJia] = useState([]);
   const [feiDuJia, setFeiDuJia] = useState([]);
   const [issuanceRights, setIssuanceRights] = useState([]);
+  const [okProjStatus, setOkProjStatus] = useState([]);
+  const [goalProjStatus, setGoalProjStatus] = useState([]);
+  const [ingProjStatus, setIngProjStatus] = useState([]);
 
   const feishuDataRef = useRef([]);
   const [currentFeishuData, setCurrentFeishuData] = useState([]);
@@ -478,29 +496,51 @@ const Page = () => {
     setFeiDuJia(__feiDuJia);
     // const data = _data?.[0]?.fields?.["发行权利"];
   };
+  // 计算签约状态
+  const calProjStatus = () => {
+    let okProjStatus = [];
+    let goalProjStatus = [];
+    let ingProjStatus = [];
+    feishuDataRef.current
+      .filter((v) => v?.fields?.["授权区域"]?.includes(selectedArea))
+      .map((v) => v.fields["签约项目"])
+      .reduce((acc, item) => (acc.includes(item) ? acc : [...acc, item]), []) // 去重
+      .map((item) => {
+        const data = feishuDataRef.current.find(
+          (v) => v.fields["签约项目"] === item
+        )?.fields?.["项目状态"];
+        if (data === "已签约") {
+          okProjStatus.push(item);
+        }
+        if (data === "目标") {
+          goalProjStatus.push(item);
+        }
+        if (data === "跟进中") {
+          ingProjStatus.push(item);
+        }
+      });
+      setOkProjStatus(okProjStatus)
+      setGoalProjStatus(goalProjStatus)
+      setIngProjStatus(ingProjStatus)
+  };
 
   useEffect(() => {
     calDuJia();
   }, [selectedProjStatusTags]);
+  useEffect(() => {
+    calProjStatus();
+  }, [selectedArea]);
 
   // 排序
-  const orderData = (data) => {
-    const _data = [...data];
-    _data?.sort((x, y) => {
-      const inA = duJia.includes(x);
-      const inB = feiDuJia.includes(x);
-      const inA_y = duJia.includes(y);
-      const inB_y = feiDuJia.includes(y);
-
-      if (inA && !inA_y) return -1; // x 在 a 里，y 不在 a 里
-      if (!inA && inA_y) return 1; // y 在 a 里，x 不在 a 里
-      if (inB && !inB_y) return -1; // x 在 b 里，y 不在 b 里
-      if (!inB && inB_y) return 1; // y 在 b 里，x 不在 b 里
-
-      return 0;
+  const orderData = (data, ...params) => {
+    const list = [];
+    params.forEach((item) => {
+      list.push(...data.filter((v) => item.includes(v)));
     });
-    return _data.reverse();
+    list.push(...data.filter((v) => !list.includes(v)));
+    return list;
   };
+
   return (
     <div className="page">
       <div
@@ -646,48 +686,38 @@ const Page = () => {
                 display: isDrawerOpens[1] ? "inline-block" : "none",
               }}
             >
-              项目签约情况
+              项目签约情况&nbsp;
             </span>
             <span
+              className="proj-status"
               style={{
                 display: isDrawerOpens[1] ? "inline-block" : "none",
+                verticalAlign: "middle",
               }}
             >
               <Tag.CheckableTag
                 key={"trust"}
-                // checked={selectedProjStatusTags.includes(item)}
-                // onChange={(checked) =>
-                //   handleChange(item, checked, "projStatus")
-                // }
-              >
-                <img src={trustIcon} alt="" width={16} />
-                已签约
-              </Tag.CheckableTag>
-              <Tag.CheckableTag
-                key={"trust"}
-                // checked={selectedProjStatusTags.includes(item)}
-                // onChange={(checked) =>
-                //   handleChange(item, checked, "projStatus")
-                // }
+                style={{ backgroundColor: COLOR.blue }}
               >
                 <img src={goal} alt="" width={16} />
                 目标
               </Tag.CheckableTag>
               <Tag.CheckableTag
                 key={"run"}
-                // checked={selectedProjStatusTags.includes(item)}
-                // onChange={(checked) =>
-                //   handleChange(item, checked, "projStatus")
-                // }
+                style={{ backgroundColor: COLOR.yellow }}
               >
                 <img src={run} alt="" width={16} /> 跟进中
               </Tag.CheckableTag>
               <Tag.CheckableTag
+                key={"trust"}
+                style={{ backgroundColor: COLOR.green }}
+              >
+                <img src={trustIcon} alt="" width={16} />
+                已签约
+              </Tag.CheckableTag>
+              <Tag.CheckableTag
                 key={"unknow"}
-                // checked={selectedProjStatusTags.includes(item)}
-                // onChange={(checked) =>
-                //   handleChange(item, checked, "projStatus")
-                // }
+                style={{ backgroundColor: COLOR.red }}
               >
                 <img src={unknow} alt="" width={14} />
                 过期
@@ -706,13 +736,14 @@ const Page = () => {
               display: isDrawerOpens[1] ? "block" : "none",
             }}
           >
-            {feishuDataRef.current
-              .filter((v) => v?.fields?.["授权区域"]?.includes(selectedArea))
-              .map((v) => v.fields["签约项目"])
-              .reduce(
-                (acc, item) => (acc.includes(item) ? acc : [...acc, item]),
-                []
-              ) // 去重
+            {
+              orderData(feishuDataRef.current
+                .filter((v) => v?.fields?.["授权区域"]?.includes(selectedArea))
+                .map((v) => v.fields["签约项目"])
+                .reduce(// 去重
+                  (acc, item) => (acc.includes(item) ? acc : [...acc, item]),
+                  []
+                ) , goalProjStatus, ingProjStatus,okProjStatus)
               .map((item, i) => {
                 const data = feishuDataRef.current.find(
                   (v) => v.fields["签约项目"] === item
@@ -726,17 +757,67 @@ const Page = () => {
                       setIssuanceRights([]);
                     }}
                     color="red"
+                    style={{
+                      backgroundColor:
+                        data === "已签约"
+                          ? selectedProjStatusTags.includes(item)
+                            ? COLOR.green_selected
+                            : COLOR.green
+                          : data === "目标"
+                          ? selectedProjStatusTags.includes(item)
+                            ? COLOR.blue_selected
+                            : COLOR.blue
+                          : data === "跟进中"
+                          ? selectedProjStatusTags.includes(item)
+                            ? COLOR.yellow_selected
+                            : COLOR.yellow
+                          : selectedProjStatusTags.includes(item)
+                          ? COLOR.red_selected
+                          : COLOR.red,
+                    }}
                   >
                     <div>
                       {item}
                       {data === "已签约" ? (
-                        <img src={trustIcon} alt="" width={16} />
+                        <img
+                          src={
+                            selectedProjStatusTags.includes(item)
+                              ? trustIcon_white
+                              : trustIcon
+                          }
+                          alt=""
+                          width={16}
+                        />
                       ) : data === "目标" ? (
-                        <img src={goal} alt="" width={16} />
+                        <img
+                          src={
+                            selectedProjStatusTags.includes(item)
+                              ? goal_white
+                              : goal
+                          }
+                          alt=""
+                          width={16}
+                        />
                       ) : data === "跟进中" ? (
-                        <img src={run} alt="" width={16} />
+                        <img
+                          src={
+                            selectedProjStatusTags.includes(item)
+                              ? run_white
+                              : run
+                          }
+                          alt=""
+                          width={16}
+                        />
                       ) : (
-                        <img src={unknow} alt="" width={14} />
+                        <img
+                          src={
+                            selectedProjStatusTags.includes(item)
+                              ? unknow_white
+                              : unknow
+                          }
+                          alt=""
+                          width={14}
+                        />
                       )}
                     </div>
                   </Tag.CheckableTag>
@@ -757,56 +838,72 @@ const Page = () => {
         >
           <p className="title">
             <img src={lemonIcon} alt="" />
-            该地区可发行权利&nbsp;&nbsp;
-            <Tag.CheckableTag
-              key={"exclusive"}
-              checked={issuanceRights.includes("0")}
-              onChange={(checked) => handleIssuanceRightsChange("0", checked)}
+            该地区可发行权利&nbsp;
+            <span
               style={{
-                backgroundColor: issuanceRights.includes("0")
-                  ? "#389e0d"
-                  : "#b7eb8f",
+                verticalAlign: "middle",
               }}
             >
-              <img
-                src={du_jia}
-                alt=""
-                width={18}
-                style={{ verticalAlign: "top" }}
-              />
-              独家
-            </Tag.CheckableTag>
-            <Tag.CheckableTag
-              key={"unExclusive"}
-              checked={issuanceRights.includes("1")}
-              onChange={(checked) => handleIssuanceRightsChange("1", checked)}
-              style={{
-                backgroundColor: issuanceRights.includes("1")
-                  ? "#d48806"
-                  : "#ffe58f",
-              }}
-            >
-              <img src={trustIcon} alt="" width={16} />
-              非独家
-            </Tag.CheckableTag>
-            {console.log(11111, issuanceRights)}
-            <Tag.CheckableTag
-              key={"unCooperation"}
-              checked={issuanceRights.includes("2")}
-              onChange={(checked) => handleIssuanceRightsChange("2", checked)}
-              style={{
-                backgroundColor: issuanceRights.includes("2")
-                  ? "#cf1322"
-                  : "#ffa39e",
-              }}
-            >
-              <img src={unknow} alt="" width={14} />
-              未合作
-            </Tag.CheckableTag>
+              <Tag.CheckableTag
+                key={"unCooperation"}
+                checked={issuanceRights.includes("2")}
+                onChange={(checked) => handleIssuanceRightsChange("2", checked)}
+                style={{
+                  backgroundColor: issuanceRights.includes("2")
+                    ? COLOR.red_selected
+                    : COLOR.red,
+                }}
+              >
+                <img
+                  src={issuanceRights.includes("2") ? unknow_white : unknow}
+                  alt=""
+                  width={14}
+                />
+                未合作
+              </Tag.CheckableTag>
+              <Tag.CheckableTag
+                key={"unExclusive"}
+                checked={issuanceRights.includes("1")}
+                onChange={(checked) => handleIssuanceRightsChange("1", checked)}
+                style={{
+                  backgroundColor: issuanceRights.includes("1")
+                    ? COLOR.yellow_selected
+                    : COLOR.yellow,
+                }}
+              >
+                <img
+                  src={
+                    issuanceRights.includes("1") ? trustIcon_white : trustIcon
+                  }
+                  alt=""
+                  width={16}
+                />
+                非独家
+              </Tag.CheckableTag>
+              <Tag.CheckableTag
+                key={"exclusive"}
+                checked={issuanceRights.includes("0")}
+                onChange={(checked) => handleIssuanceRightsChange("0", checked)}
+                style={{
+                  backgroundColor: issuanceRights.includes("0")
+                    ? COLOR.green_selected
+                    : COLOR.green,
+                }}
+              >
+                <img
+                  src={issuanceRights.includes("0") ? du_jia_white : du_jia}
+                  alt=""
+                  width={18}
+                  style={{ marginTop: "-2px" }}
+                />
+                独家
+              </Tag.CheckableTag>
+            </span>
           </p>
           <div id="issueRight">
             {selectedProjStatusTags.length > 0 &&
-              orderData(publishData)
+              orderData(publishData, duJia, feiDuJia)
+                .reverse()
                 .filter((v) => {
                   if (issuanceRights.length === 0) {
                     return true;
@@ -831,10 +928,10 @@ const Page = () => {
                       // }
                       style={{
                         backgroundColor: duJia?.includes(item)
-                          ? "#b7eb8f"
+                          ? "#d9f7be"
                           : feiDuJia?.includes(item)
-                          ? "#ffe58f"
-                          : "#ffa39e",
+                          ? "#fff1b8"
+                          : "#ffccc7",
                       }}
                     >
                       <div>
